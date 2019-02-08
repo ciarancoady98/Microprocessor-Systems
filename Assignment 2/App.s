@@ -48,7 +48,20 @@ dloop	subs	r4,r4,#1
 	
 stop	B	stop
 
+	END
+
 ;Convert to Ascii Subroutine
+;Then converts this to the ascii code for that number
+;note only need to consider last 4bits 
+;
+;R0 - number being masked
+;R1 - memory address of space for ascii characters
+;R2 - memory address of divisor table
+;R0 - return ascii character
+
+	stmfd SP!, {lr, r3-r8}
+	
+	ldmfd SP!, {pc, r3-r8}
 		
 	AREA	Table, DATA, READONLY
 			
@@ -68,4 +81,4 @@ DIVISORTABLE
 		
 ASCIIREPRESENTATION SPACE 12
 
-	END
+	
