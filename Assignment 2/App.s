@@ -11,41 +11,69 @@ start
 IO1DIR	EQU	0xE0028018
 IO1SET	EQU	0xE0028014
 IO1CLR	EQU	0xE002801C
-
-	ldr	r1,=IO1DIR
-	ldr	r2,=0x000f0000	;select P1.19--P1.16
-	str	r2,[r1]		;make them outputs
-	ldr	r1,=IO1SET
-	str	r2,[r1]		;set them to turn the LEDs off
-	ldr	r2,=IO1CLR
-; r1 points to the SET register
-; r2 points to the CLEAR register
-
-;	ldr	r5,=0x00100000	; end when the mask reaches this value
-;wloop	ldr	r3,=0x00010000	; start with P1.16.
-;floop	str	r3,[r2]	   	; clear the bit -> turn on the LED
-
-;delay for about a half second
-;	ldr	r4,=4000000
-;dloop	subs	r4,r4,#1
-;	bne	dloop
-
-;	str	r3,[r1]		;set the bit -> turn off the LED
-;	mov	r3,r3,lsl #1	;shift up to next bit. P1.16 -> P1.17 etc.
-;	cmp	r3,r5
-;	bne	floop
-;	b	wloop
 	
 	ldr r0, =0x0000101B
 	ldr r1, =ASCIIREPRESENTATION
 	ldr r2, =DIVISORTABLE
 	BL getDecimal
 	
+	ldr	r1,=IO1DIR
+	ldr	r6,=0x000f0000	;select P1.19--P1.16
+	str	r6,[r1]		;make them outputs
+	ldr	r1,=IO1SET
+	str	r6,[r1]		;set them to turn the LEDs off
+	ldr	r2,=IO1CLR
+	ldr r3, =ASCIIREPRESENTATION
+; r1 points to the SET register
+; r2 points to the CLEAR register
+; r3 points to the start of the decimal representation
 
+wloop	
+	ldr r0, [r3]
+	;ldr r4, [r3]
+	bl reverseNumber
+	mov r4, r0
+	cmp r4, #-1
+	beq endwloop
+	str	r4,[r2]	   	; clear the bit -> turn on the LED
+;delay for about a half second
+	ldr	r5,=40000000
+dloop
+	cmp r5, #0
+	ble	enddloop
+	subs r5,r5,#1
+	b dloop
+enddloop
 	
+	str	r6,[r1]		;set the bit -> turn off the LED
+	add r3, r3, #4
+	b	wloop
+endwloop
+
 stop	B	stop
 
-		
+reverseNumber
+
+	stmfd SP!, {lr, r3-r8}				; Store registers to stack
+	ldr r3, =0 ; count = 0
+	ldr r7, =0
+reverse
+	cmp r3, #4
+	bge endreverse
+	and r6, r0, #1
+	mov r0, r0, lsr #1
+	cmp r6, #1
+	beq push1
+	b endpush
+push1
+	orr r7, r7, #1
+endpush
+	add r3, r3, #1
+	b reverse
+endreverse
+	mov r0, r7, lsl #16
+	ldmfd SP!, {pc, r3-r8}		
+
 
 ;Convert to Decimal Subroutine
 ;Converts a Unsigned interger to its decimal digits
@@ -58,7 +86,6 @@ stop	B	stop
 
 getDecimal
 	stmfd SP!, {lr, r3-r8}				; Store registers to stack
-	
 	;take care of plus or minus
 	;convert number to unsigned representation if required
 	;account for overflow when converting a max signed to unsigned
