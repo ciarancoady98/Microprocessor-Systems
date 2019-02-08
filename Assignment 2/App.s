@@ -8,16 +8,16 @@
 start
 
 ;Setup pin addresses
-;IO1DIR	EQU	0xE0028018
-;IO1SET	EQU	0xE0028014
-;IO1CLR	EQU	0xE002801C
-;
-;	ldr	r1,=IO1DIR
-;	ldr	r2,=0x000f0000	;select P1.19--P1.16
-;	str	r2,[r1]		;make them outputs
-;	ldr	r1,=IO1SET
-;	str	r2,[r1]		;set them to turn the LEDs off
-;	ldr	r2,=IO1CLR
+IO1DIR	EQU	0xE0028018
+IO1SET	EQU	0xE0028014
+IO1CLR	EQU	0xE002801C
+
+	ldr	r1,=IO1DIR
+	ldr	r2,=0x000f0000	;select P1.19--P1.16
+	str	r2,[r1]		;make them outputs
+	ldr	r1,=IO1SET
+	str	r2,[r1]		;set them to turn the LEDs off
+	ldr	r2,=IO1CLR
 ; r1 points to the SET register
 ; r2 points to the CLEAR register
 
@@ -35,14 +35,6 @@ start
 ;	cmp	r3,r5
 ;	bne	floop
 ;	b	wloop
-	
-	;
-	;
-	;
-	;
-	;
-	;
-	;
 	
 	ldr r0, =0x0000101B
 	ldr r1, =ASCIIREPRESENTATION
@@ -66,6 +58,10 @@ stop	B	stop
 
 getDecimal
 	stmfd SP!, {lr, r3-r8}				; Store registers to stack
+	
+	;take care of plus or minus
+	;convert number to unsigned representation if required
+	;account for overflow when converting a max signed to unsigned
 	
 	ldr r4, =0 							; Divisor table index = 0;
 for
