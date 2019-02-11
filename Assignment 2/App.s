@@ -9,8 +9,8 @@ IO1DIR	EQU	0xE0028018
 IO1SET	EQU	0xE0028014
 IO1CLR	EQU	0xE002801C
 	
-	ldr r0, =0x0000101B					; number to be displayed
-	;ldr r0, =0xffffffff
+	ldr r0, =DISPLAYNUMBER				; number to be displayed
+	ldr r0, [r0]
 	ldr r1, =ASCIIREPRESENTATION		; space in memory for converted number
 	ldr r2, =DIVISORTABLE				; table of values to convert digits
 	
@@ -152,6 +152,9 @@ endfor
 	ldmfd SP!, {pc, r3-r8}				
 		
 	AREA	Table, DATA, READONLY
+		
+DISPLAYNUMBER
+	DCD -4
 			
 DIVISORTABLE		
 	DCD 1000000000
