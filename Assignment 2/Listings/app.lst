@@ -7,162 +7,228 @@ ARM Macro Assembler    Page 1
     1 00000000                 AREA             Assignment2, CODE, READONLY
     2 00000000                 IMPORT           main
     3 00000000         
-    4 00000000         ; sample program makes the 4 LEDs P1.16, P1.17, P1.18, P
-                       1.19 go on and off in sequence
-    5 00000000         ; (c) Mike Brady, 2011 -- 2019.
+    4 00000000                 EXPORT           start
+    5 00000000         start
     6 00000000         
-    7 00000000                 EXPORT           start
-    8 00000000         start
-    9 00000000         
-   10 00000000         ;Setup pin addresses
-   11 00000000 E0028018 
+    7 00000000         ;Setup pin addresses
+    8 00000000 E0028018 
                        IO1DIR  EQU              0xE0028018
-   12 00000000 E0028014 
+    9 00000000 E0028014 
                        IO1SET  EQU              0xE0028014
-   13 00000000 E002801C 
+   10 00000000 E002801C 
                        IO1CLR  EQU              0xE002801C
-   14 00000000         
-   15 00000000 E59F00F4        ldr              r0, =0x0000101B
-   16 00000004 E59F10F4        ldr              r1, =ASCIIREPRESENTATION
-   17 00000008 E59F20F4        ldr              r2, =DIVISORTABLE
-   18 0000000C EB000024        BL               getDecimal
-   19 00000010         
-   20 00000010 E59F10F0        ldr              r1,=IO1DIR
-   21 00000014 E3A0680F        ldr              r6,=0x000f0000 ;select P1.19--P
-                                                            1.16
-   22 00000018 E5816000        str              r6,[r1]     ;make them outputs
-   23 0000001C E59F10E8        ldr              r1,=IO1SET
-   24 00000020 E5816000        str              r6,[r1]     ;set them to turn t
-                                                            he LEDs off
-   25 00000024 E59F20E4        ldr              r2,=IO1CLR
-   26 00000028 E59F30D0        ldr              r3, =ASCIIREPRESENTATION
+   11 00000000         
+   12 00000000 E59F014C        ldr              r0, =0x0000101B ; number to be 
+                                                            displayed
+   13 00000004         ;ldr r0, =0xffffffff
+   14 00000004 E59F114C        ldr              r1, =ASCIIREPRESENTATION ; spac
+                                                            e in memory for con
+                                                            verted number
+   15 00000008 E59F214C        ldr              r2, =DIVISORTABLE ; table of va
+                                                            lues to convert dig
+                                                            its
+   16 0000000C         
+   17 0000000C EB000025        bl               getDecimal
+   18 00000010         
+   19 00000010 E59F1148        ldr              r1,=IO1DIR
+   20 00000014 E3A0680F        ldr              r6,=0x000f0000 ; select P1.19--
+                                                            P1.16
+   21 00000018 E5816000        str              r6,[r1]     ; make them outputs
+                                                            
+   22 0000001C E59F1140        ldr              r1,=IO1SET
+   23 00000020 E5816000        str              r6,[r1]     ; set them to turn 
+                                                            the LEDs off
+   24 00000024 E59F213C        ldr              r2,=IO1CLR
+   25 00000028 E59F3128        ldr              r3, =ASCIIREPRESENTATION
+   26 0000002C         
    27 0000002C         ; r1 points to the SET register
    28 0000002C         ; r2 points to the CLEAR register
    29 0000002C         ; r3 points to the start of the decimal representation
    30 0000002C         
    31 0000002C         wloop
    32 0000002C E5930000        ldr              r0, [r3]
-   33 00000030         ;ldr r4, [r3]
-   34 00000030 EB00000C        bl               reverseNumber
-   35 00000034 E1A04000        mov              r4, r0
-   36 00000038 E3740001        cmp              r4, #-1
-   37 0000003C 0A000008        beq              endwloop
-   38 00000040 E5824000        str              r4,[r2]     ; clear the bit -> 
+   33 00000030 EB00000C        bl               reverseNumber
+   34 00000034 E1A04000        mov              r4, r0
+   35 00000038 E3740001        cmp              r4, #-1
+   36 0000003C 0A000008        beq              endwloop
+   37 00000040 E5824000        str              r4,[r2]     ; clear the bit -> 
                                                             turn on the LED
-   39 00000044         ;delay for about a half second
-   40 00000044 E59F50CC        ldr              r5,=40000000
-   41 00000048         dloop
-   42 00000048 E3550000        cmp              r5, #0
-   43 0000004C DA000001        ble              enddloop
-   44 00000050 E2555001        subs             r5,r5,#1
-   45 00000054 EAFFFFFB        b                dloop
-   46 00000058         enddloop
-   47 00000058         
-   48 00000058 E5816000        str              r6,[r1]     ;set the bit -> tur
-                                                            n off the LED
-   49 0000005C E2833004        add              r3, r3, #4
-   50 00000060 EAFFFFF1        b                wloop
-   51 00000064         endwloop
+   38 00000044 E59F5124        ldr              r5,=40000000 ; delay for about 
+                                                            a half second
+   39 00000048         dloop
+   40 00000048 E3550000        cmp              r5, #0
+   41 0000004C DA000001        ble              enddloop    ; while(delay > 0){
+                                                            
+   42 00000050 E2555001        subs             r5,r5,#1    ;  delay--
+   43 00000054 EAFFFFFB        b                dloop       ; }
+   44 00000058         enddloop
+   45 00000058         
 
 
 
 ARM Macro Assembler    Page 2 
 
 
-   52 00000064         
-   53 00000064 EAFFFFFE 
+   46 00000058 E5816000        str              r6,[r1]     ; set the bit -> tu
+                                                            rn off the LED
+   47 0000005C E2833004        add              r3, r3, #4  ; decimal represent
+                                                            ation address ++
+   48 00000060 EAFFFFF1        b                wloop
+   49 00000064         endwloop
+   50 00000064         
+   51 00000064 EAFFFFFE 
                        stop    B                stop
-   54 00000068         
-   55 00000068         reverseNumber
-   56 00000068         
-   57 00000068 E92D41F8        stmfd            SP!, {lr, r3-r8} ; Store regist
+   52 00000068         
+   53 00000068         ;Reverse Number Subroutine
+   54 00000068         ;Reverses the last 4 bits of a binary number
+   55 00000068         ;then shifts it into the correct position to 
+   56 00000068         ;be used as a mask with pin outputs
+   57 00000068         ;
+   58 00000068         ;R0 number being converted
+   59 00000068         ;
+   60 00000068         
+   61 00000068         reverseNumber
+   62 00000068         
+   63 00000068 E92D41F8        stmfd            SP!, {lr, r3-r8} ; store regist
                                                             ers to stack
-   58 0000006C E3A03000        ldr              r3, =0      ; count = 0
-   59 00000070 E3A07000        ldr              r7, =0
-   60 00000074         reverse
-   61 00000074 E3530004        cmp              r3, #4
-   62 00000078 AA000007        bge              endreverse
-   63 0000007C E2006001        and              r6, r0, #1
-   64 00000080 E1A000A0        mov              r0, r0, lsr #1
-   65 00000084 E3560001        cmp              r6, #1
-   66 00000088 0A000000        beq              push1
-   67 0000008C EA000000        b                endpush
-   68 00000090         push1
-   69 00000090 E3877001        orr              r7, r7, #1
-   70 00000094         endpush
-   71 00000094 E2833001        add              r3, r3, #1
-   72 00000098 EAFFFFF5        b                reverse
-   73 0000009C         endreverse
-   74 0000009C E1A00807        mov              r0, r7, lsl #16
-   75 000000A0 E8BD81F8        ldmfd            SP!, {pc, r3-r8}
-   76 000000A4         
-   77 000000A4         
-   78 000000A4         ;Convert to Decimal Subroutine
-   79 000000A4         ;Converts a Unsigned interger to its decimal digits
-   80 000000A4         ;and saves it in memory
-   81 000000A4         ;
-   82 000000A4         ;R0 - number being converted
-   83 000000A4         ;R1 - memory address of space for decimal digits
-   84 000000A4         ;R2 - memory address of divisor table
-   85 000000A4         ;
-   86 000000A4         
-   87 000000A4         getDecimal
-   88 000000A4 E92D41F8        stmfd            SP!, {lr, r3-r8} ; Store regist
-                                                            ers to stack
-   89 000000A8         ;take care of plus or minus
-   90 000000A8         ;convert number to unsigned representation if required
-   91 000000A8         ;account for overflow when converting a max signed to un
-                       signed
-   92 000000A8         
-   93 000000A8 E3A04000        ldr              r4, =0      ; Divisor table ind
-                                                            ex = 0;
-   94 000000AC         for
-   95 000000AC E354000A        cmp              r4, #10     ; for(index < divis
-                                                            orTable.length){
-   96 000000B0 AA00000E        bge              endfor
-   97 000000B4 E5923000        ldr              r3, [r2]    ; load value at div
-                                                            isor table
-   98 000000B8         if1
-   99 000000B8 E1500003        cmp              r0, r3      ; if(numberBeingCon
-                                                            verted >= divisor){
+   64 0000006C E3A03000        ldr              r3, =0      ; count = 0
+   65 00000070 E3A04000        ldr              r4, =0      ; reversed number 
+   66 00000074         reverse
+   67 00000074 E3530004        cmp              r3, #4      ; while(count < num
+                                                            ber of digits to re
+                                                            verse){
+   68 00000078 AA000008        bge              endreverse
+   69 0000007C E2005001        and              r5, r0, #1  ; mask out least si
+                                                            gnificant bit
+   70 00000080 E1A000A0        mov              r0, r0, lsr #1 ; shift original
+                                                             number right 1 bit
                                                             
-  100 000000BC BA000008        blt              endif1
-  101 000000C0 E3A05000        ldr              r5, =0      ; digitCount = 0;
+   71 00000084 E1A04084        mov              r4, r4, lsl #1 ; shift reversed
+                                                             number left 1 bit
+   72 00000088 E3550001        cmp              r5, #1      ; if(masked bit == 
+                                                            1){
+   73 0000008C 0A000000        beq              push1
+   74 00000090 EA000000        b                endpush
+   75 00000094         push1
+   76 00000094 E3844001        orr              r4, r4, #1  ; mask in a 1
+   77 00000098         endpush
+   78 00000098 E2833001        add              r3, r3, #1  ; count++
+   79 0000009C EAFFFFF4        b                reverse
+   80 000000A0         endreverse
+   81 000000A0 E1A00804        mov              r0, r4, lsl #16 ; shift reverse
+                                                            d number to correct
+                                                             position
+   82 000000A4 E8BD81F8        ldmfd            SP!, {pc, r3-r8}
+   83 000000A8         
+   84 000000A8         
+   85 000000A8         ;Convert to Decimal Subroutine
+   86 000000A8         ;Converts a Unsigned interger to its decimal digits
+   87 000000A8         ;and saves it in memory
+   88 000000A8         ;
+   89 000000A8         ;R0 - number being converted
+   90 000000A8         ;R1 - memory address of space for decimal digits
+   91 000000A8         ;R2 - memory address of divisor table
 
 
 
 ARM Macro Assembler    Page 3 
 
 
-  102 000000C4         while
-  103 000000C4 E1500003        cmp              r0, r3      ; while(numberBeing
+   92 000000A8         ;
+   93 000000A8         
+   94 000000A8         getDecimal
+   95 000000A8 E92D41F8        stmfd            SP!, {lr, r3-r8} ; Store regist
+                                                            ers to stack
+   96 000000AC         
+   97 000000AC E3A06000        ldr              r6, =0      ; bool corrected = 
+                                                            true;
+   98 000000B0 E3500000        cmp              r0, #0      ; if(number is nega
+                                                            tive){
+   99 000000B4 AA00000A        bge              positive
+  100 000000B8 E3A0402D        ldr              r4, ='-'    ; load negative sig
+                                                            n
+  101 000000BC E5814000        str              r4, [r1]    ; store sign to mem
+                                                            ory space
+  102 000000C0 E2811004        add              r1, r1, #4  ; digitAddress++
+  103 000000C4         ; }
+  104 000000C4 E3E04000        ldr              r4, =0xffffffff ; max negative 
+                                                            number
+  105 000000C8 E1500004        cmp              r0, r4      ; if(number == max 
+                                                            negative number)
+  106 000000CC 1A000001        bne              complement
+  107 000000D0 E2400001        sub              r0, r0, #1  ; subtract 1 to all
+                                                            ow for conversion
+  108 000000D4 E3A06001        ldr              r6, =1      ; bool corrected = 
+                                                            false
+  109 000000D8         complement
+  110 000000D8 E1E00000        mvn              r0, r0      ; invert the bits
+  111 000000DC E2800001        add              r0, r0, #1  ; 2's complement
+  112 000000E0 EA000002        b                endsign
+  113 000000E4         positive
+  114 000000E4 E3A0402B        ldr              r4, ='+'    ; load positive sig
+                                                            n
+  115 000000E8 E5814000        str              r4, [r1]    ; store sign to mem
+                                                            ory space
+  116 000000EC E2811004        add              r1, r1, #4  ; digitAddress++
+  117 000000F0         endsign
+  118 000000F0         
+  119 000000F0 E3A04000        ldr              r4, =0      ; Divisor table ind
+                                                            ex = 0;
+  120 000000F4         for
+  121 000000F4 E354000A        cmp              r4, #10     ; for(index < divis
+                                                            orTable.length){
+  122 000000F8 AA000012        bge              endfor
+  123 000000FC E5923000        ldr              r3, [r2]    ; load value at div
+                                                            isor table
+  124 00000100         if1
+  125 00000100 E1500003        cmp              r0, r3      ; if(numberBeingCon
+                                                            verted >= divisor){
+                                                            
+  126 00000104 BA00000C        blt              endif1
+  127 00000108 E3A05000        ldr              r5, =0      ; digitCount = 0;
+  128 0000010C         while
+  129 0000010C E1500003        cmp              r0, r3      ; while(numberBeing
                                                             Converted >= diviso
                                                             r){
-  104 000000C8 BA000002        blt              endwh
-  105 000000CC E0400003        sub              r0, r0, r3  ; numberBeingConver
+  130 00000110 BA000006        blt              endwh
+  131 00000114 E0400003        sub              r0, r0, r3  ; numberBeingConver
                                                             ted -= divisor
-  106 000000D0 E2855001        add              r5, r5, #1  ; digitCount++
-  107 000000D4 EAFFFFFA        b                while
-  108 000000D8         endwh
-  109 000000D8         ;put decimal number into memory
-  110 000000D8 E5815000        str              r5, [r1]    ; store digit to me
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+  132 00000118 E2855001        add              r5, r5, #1  ; digitCount++
+  133 0000011C E3560000        cmp              r6, #0
+  134 00000120 0A000001        beq              noOverflow  ; if(|number| > max
+                                                             positive number)
+  135 00000124 E2800001        add              r0, r0, #1  ; add 1 to correct 
+                                                            conversion
+  136 00000128 E3A06000        ldr              r6, =0      ; bool corrected = 
+                                                            true;
+  137 0000012C         noOverflow
+  138 0000012C EAFFFFF6        b                while
+  139 00000130         endwh
+  140 00000130         ;put decimal number into memory
+  141 00000130 E5815000        str              r5, [r1]    ; store digit to me
                                                             mory space
-  111 000000DC E3A05000        ldr              r5, =0      ; digitCount = 0
-  112 000000E0 E2811004        add              r1, r1, #4  ; digitAddress++
-  113 000000E4         endif1
-  114 000000E4 E2844001        add              r4, r4, #1  ; index++
-  115 000000E8 E2822004        add              r2, r2, #4  ; divisorTableAddre
+  142 00000134 E3A05000        ldr              r5, =0      ; digitCount = 0
+  143 00000138 E2811004        add              r1, r1, #4  ; digitAddress++
+  144 0000013C         endif1
+  145 0000013C E2844001        add              r4, r4, #1  ; index++
+  146 00000140 E2822004        add              r2, r2, #4  ; divisorTableAddre
                                                             ss++
-  116 000000EC EAFFFFEE        b                for
-  117 000000F0         endfor
-  118 000000F0         ;terminate the string
-  119 000000F0 E3E05000        ldr              r5, =-1     ; load -1 as termin
+  147 00000144 EAFFFFEA        b                for
+  148 00000148         endfor
+  149 00000148         ;terminate the string
+  150 00000148 E3E05000        ldr              r5, =-1     ; load -1 as termin
                                                             ating character   
-  120 000000F4 E5815000        str              r5, [r1]    ; store to digitAdd
+  151 0000014C E5815000        str              r5, [r1]    ; store to digitAdd
                                                             ress
-  121 000000F8 E8BD81F8        ldmfd            SP!, {pc, r3-r8}
-  122 000000FC         
-  123 000000FC 0000101B 
+  152 00000150 E8BD81F8        ldmfd            SP!, {pc, r3-r8}
+  153 00000154         
+  154 00000154 0000101B 
               00000000 
               00000000 
               E0028018 
@@ -170,38 +236,38 @@ ARM Macro Assembler    Page 3
               E002801C 
               00000000 
               02625A00         AREA             Table, DATA, READONLY
-  124 00000000         
-  125 00000000         DIVISORTABLE
-  126 00000000 3B9ACA00        DCD              1000000000
-  127 00000004 05F5E100        DCD              100000000
-  128 00000008 00989680        DCD              10000000
-  129 0000000C 000F4240        DCD              1000000
-  130 00000010 000186A0        DCD              100000
-  131 00000014 00002710        DCD              10000
-  132 00000018 000003E8        DCD              1000
-  133 0000001C 00000064        DCD              100
-  134 00000020 0000000A        DCD              10
-  135 00000024 00000001        DCD              1
-  136 00000028         
-  137 00000028                 AREA             AsciiConversion, READWRITE
-  138 00000000         
-  139 00000000 00 00 00 
+  155 00000000         
+  156 00000000         DIVISORTABLE
+  157 00000000 3B9ACA00        DCD              1000000000
+  158 00000004 05F5E100        DCD              100000000
+  159 00000008 00989680        DCD              10000000
+  160 0000000C 000F4240        DCD              1000000
+  161 00000010 000186A0        DCD              100000
+  162 00000014 00002710        DCD              10000
+  163 00000018 000003E8        DCD              1000
+  164 0000001C 00000064        DCD              100
+  165 00000020 0000000A        DCD              10
+  166 00000024 00000001        DCD              1
+  167 00000028         
+  168 00000028                 AREA             AsciiConversion, READWRITE
+  169 00000000         
+  170 00000000 00 00 00 
               00 00 00 
               00 00 00 
               00 00 00 ASCIIREPRESENTATION
                                SPACE            12
-  140 0000000C         
-  141 0000000C                 END
+  171 0000000C         
+  172 0000000C                 END
+
+
+
+ARM Macro Assembler    Page 5 
+
+
 Command Line: --debug --xref --diag_suppress=9931 --apcs=interwork --depend=.\a
-
-
-
-ARM Macro Assembler    Page 4 
-
-
 pp.d -o.\app.o -IC:\Keil_v5\ARM\RV31\INC -IC:\Keil_v5\ARM\CMSIS\Include -IC:\Ke
-il_v5\ARM\Inc\Philips --predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 
-1" --predefine="__UVISION_VERSION SETA 516" --list=.\listings\app.lst App.s
+il_v5\ARM\INC\Philips --predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 
+1" --predefine="__UVISION_VERSION SETA 526" --list=.\listings\app.lst App.s
 
 
 
@@ -216,57 +282,57 @@ Symbol: Assignment2
    Uses
       None
 Comment: Assignment2 unused
+complement 000000D8
+
+Symbol: complement
+   Definitions
+      At line 109 in file App.s
+   Uses
+      At line 106 in file App.s
+Comment: complement used once
 dloop 00000048
 
 Symbol: dloop
    Definitions
-      At line 41 in file App.s
+      At line 39 in file App.s
    Uses
-      At line 45 in file App.s
+      At line 43 in file App.s
 Comment: dloop used once
 enddloop 00000058
 
 Symbol: enddloop
    Definitions
-      At line 46 in file App.s
+      At line 44 in file App.s
    Uses
-      At line 43 in file App.s
+      At line 41 in file App.s
 Comment: enddloop used once
-endfor 000000F0
+endfor 00000148
 
 Symbol: endfor
    Definitions
-      At line 117 in file App.s
+      At line 148 in file App.s
    Uses
-      At line 96 in file App.s
+      At line 122 in file App.s
 Comment: endfor used once
-endif1 000000E4
+endif1 0000013C
 
 Symbol: endif1
    Definitions
-      At line 113 in file App.s
+      At line 144 in file App.s
    Uses
-      At line 100 in file App.s
+      At line 126 in file App.s
 Comment: endif1 used once
-endpush 00000094
+endpush 00000098
 
 Symbol: endpush
    Definitions
-      At line 70 in file App.s
+      At line 77 in file App.s
    Uses
-      At line 67 in file App.s
+      At line 74 in file App.s
 Comment: endpush used once
-endreverse 0000009C
+endreverse 000000A0
 
 Symbol: endreverse
-   Definitions
-      At line 73 in file App.s
-   Uses
-      At line 62 in file App.s
-Comment: endreverse used once
-endwh 000000D8
-
-Symbol: endwh
 
 
 
@@ -274,63 +340,63 @@ ARM Macro Assembler    Page 2 Alphabetic symbol ordering
 Relocatable symbols
 
    Definitions
-      At line 108 in file App.s
+      At line 80 in file App.s
    Uses
-      At line 104 in file App.s
+      At line 68 in file App.s
+Comment: endreverse used once
+endsign 000000F0
+
+Symbol: endsign
+   Definitions
+      At line 117 in file App.s
+   Uses
+      At line 112 in file App.s
+Comment: endsign used once
+endwh 00000130
+
+Symbol: endwh
+   Definitions
+      At line 139 in file App.s
+   Uses
+      At line 130 in file App.s
 Comment: endwh used once
 endwloop 00000064
 
 Symbol: endwloop
    Definitions
-      At line 51 in file App.s
+      At line 49 in file App.s
    Uses
-      At line 37 in file App.s
+      At line 36 in file App.s
 Comment: endwloop used once
-for 000000AC
+for 000000F4
 
 Symbol: for
    Definitions
-      At line 94 in file App.s
+      At line 120 in file App.s
    Uses
-      At line 116 in file App.s
+      At line 147 in file App.s
 Comment: for used once
-getDecimal 000000A4
+getDecimal 000000A8
 
 Symbol: getDecimal
    Definitions
-      At line 87 in file App.s
+      At line 94 in file App.s
    Uses
-      At line 18 in file App.s
+      At line 17 in file App.s
 Comment: getDecimal used once
-if1 000000B8
+if1 00000100
 
 Symbol: if1
    Definitions
-      At line 98 in file App.s
+      At line 124 in file App.s
    Uses
       None
 Comment: if1 unused
-push1 00000090
+noOverflow 0000012C
 
-Symbol: push1
+Symbol: noOverflow
    Definitions
-      At line 68 in file App.s
-   Uses
-      At line 66 in file App.s
-Comment: push1 used once
-reverse 00000074
-
-Symbol: reverse
-   Definitions
-      At line 60 in file App.s
-   Uses
-      At line 72 in file App.s
-Comment: reverse used once
-reverseNumber 00000068
-
-Symbol: reverseNumber
-   Definitions
-      At line 55 in file App.s
+      At line 137 in file App.s
    Uses
 
 
@@ -338,41 +404,79 @@ Symbol: reverseNumber
 ARM Macro Assembler    Page 3 Alphabetic symbol ordering
 Relocatable symbols
 
-      At line 34 in file App.s
+      At line 134 in file App.s
+Comment: noOverflow used once
+positive 000000E4
+
+Symbol: positive
+   Definitions
+      At line 113 in file App.s
+   Uses
+      At line 99 in file App.s
+Comment: positive used once
+push1 00000094
+
+Symbol: push1
+   Definitions
+      At line 75 in file App.s
+   Uses
+      At line 73 in file App.s
+Comment: push1 used once
+reverse 00000074
+
+Symbol: reverse
+   Definitions
+      At line 66 in file App.s
+   Uses
+      At line 79 in file App.s
+Comment: reverse used once
+reverseNumber 00000068
+
+Symbol: reverseNumber
+   Definitions
+      At line 61 in file App.s
+   Uses
+      At line 33 in file App.s
 Comment: reverseNumber used once
 start 00000000
 
 Symbol: start
    Definitions
-      At line 8 in file App.s
+      At line 5 in file App.s
    Uses
-      At line 7 in file App.s
+      At line 4 in file App.s
 Comment: start used once
 stop 00000064
 
 Symbol: stop
    Definitions
-      At line 53 in file App.s
+      At line 51 in file App.s
    Uses
-      At line 53 in file App.s
+      At line 51 in file App.s
 Comment: stop used once
-while 000000C4
+while 0000010C
 
 Symbol: while
    Definitions
-      At line 102 in file App.s
+      At line 128 in file App.s
    Uses
-      At line 107 in file App.s
+      At line 138 in file App.s
 Comment: while used once
 wloop 0000002C
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Relocatable symbols
+
 
 Symbol: wloop
    Definitions
       At line 31 in file App.s
    Uses
-      At line 50 in file App.s
+      At line 48 in file App.s
 Comment: wloop used once
-19 symbols
+23 symbols
 
 
 
@@ -383,15 +487,15 @@ DIVISORTABLE 00000000
 
 Symbol: DIVISORTABLE
    Definitions
-      At line 125 in file App.s
+      At line 156 in file App.s
    Uses
-      At line 17 in file App.s
+      At line 15 in file App.s
 Comment: DIVISORTABLE used once
 Table 00000000
 
 Symbol: Table
    Definitions
-      At line 123 in file App.s
+      At line 154 in file App.s
    Uses
       None
 Comment: Table unused
@@ -406,16 +510,16 @@ ASCIIREPRESENTATION 00000000
 
 Symbol: ASCIIREPRESENTATION
    Definitions
-      At line 139 in file App.s
+      At line 170 in file App.s
    Uses
-      At line 16 in file App.s
-      At line 26 in file App.s
+      At line 14 in file App.s
+      At line 25 in file App.s
 
 AsciiConversion 00000000
 
 Symbol: AsciiConversion
    Definitions
-      At line 137 in file App.s
+      At line 168 in file App.s
    Uses
       None
 Comment: AsciiConversion unused
@@ -430,25 +534,25 @@ IO1CLR E002801C
 
 Symbol: IO1CLR
    Definitions
-      At line 13 in file App.s
+      At line 10 in file App.s
    Uses
-      At line 25 in file App.s
+      At line 24 in file App.s
 Comment: IO1CLR used once
 IO1DIR E0028018
 
 Symbol: IO1DIR
    Definitions
-      At line 11 in file App.s
+      At line 8 in file App.s
    Uses
-      At line 20 in file App.s
+      At line 19 in file App.s
 Comment: IO1DIR used once
 IO1SET E0028014
 
 Symbol: IO1SET
    Definitions
-      At line 12 in file App.s
+      At line 9 in file App.s
    Uses
-      At line 23 in file App.s
+      At line 22 in file App.s
 Comment: IO1SET used once
 3 symbols
 
@@ -466,4 +570,4 @@ Symbol: main
       None
 Comment: main unused
 1 symbol
-362 symbols in table
+366 symbols in table
