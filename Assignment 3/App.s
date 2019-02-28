@@ -17,11 +17,14 @@ IO1CLR	EQU	0xE002801C
 	str	r2,[r1]		;make them outputs
 	ldr	r1,=IO1SET
 	str	r2,[r1]		;set them to turn the LEDs off
+	ldr r11, =SUM ;sum in mem
+	str r11, [r11]
 	
 	;R12 - number we are currently working on
 	mov r12, #0
 mainloop
-	bl press
+	;bl press
+	ldr r0, =0x00800000
 	cmp r0, #0
 	beq endSwitch
 	cmp r0, #0x00400000
@@ -31,41 +34,62 @@ endSwitch
 	b mainloop
 
 numberChange
+	;mov r1, r12
 	bl numberChangeSub
-	mov r1, r12
 	b endSwitch
 	
 operatorChange
+	;mov r1, r12
 	bl operatorChangeSub
-	mov r1, r12
 	b endSwitch
 
 stop	B	stop
 
 ;R0 - button pressed
-;R1 - current number
+;R12 - current number
 numberChangeSub
-	stmfd sp!, {r0-r1, lr}
-	cmp r0, #0x0080000
+	stmfd sp!, {lr}
+	cmp r0, #0x00800000
 	beq adding
 	;subtracting
-	sub r1, r1, #1
+	sub r12, r12, #1
+	b endNumberChange
 adding
-	add r1, r1, #1
+	add r12, r12, #1
+	
+endNumberChange
+	
+	mov r1, r12
 	bl updateDisplay
-	ldmfd sp!, {r0-r1, pc}
+	ldmfd sp!, { pc}
 	
 operatorChangeSub
+	stmfd sp!, {lr}
+	str r12, [r11] ; store num
+	add r11, r11, #4 ; inc address
+	cmp r0, #0x00200000 ; +
+	beq addition
+	;subtraction
+	ldr r3, ='-'
+	str r3, [r11]
+	b endOpChange
 
+addition
+	ldr r3, ='+'
+	str r3, [r11]
+endOpChange
+	add r11, r11, #4 ; inc adr
+	ldmfd sp!, { pc}
+	
 press
-	stmfd sp!, {r0-r1, lr}
+	stmfd sp!, {lr}
 	ldr r0, =IO1PIN
 	ldr r0, [r0]
 	ldr r1, =0x00f00000
 	and r0, r0, r1
 	mvn r0, r0
 	and r0, r0, r1
-	ldmfd sp!, {r0-r1, pc}
+	ldmfd sp!, {pc}
 	
 clearDisplay
 	stmfd sp!, {r0-r7, lr}
@@ -79,8 +103,23 @@ updateDisplay
 	ldr	r1,=IO1SET
 	mov r2, #0x000f0000
 	str	r2,[r1]		;set them to turn the LEDs off
+	
+	ldr	r5,=40000000
+dloop
+	cmp r5, #0								
+	ble	enddloop						; while(delay > 0){
+	subs r5,r5,#1						; 	delay--
+	b dloop	
+	
+enddloop
 	ldr	r1,=IO1CLR
 	str	r0,[r1]		;turn on the LED's
 	ldmfd sp!, {r0-r7, pc}
 
+	
+		
+	AREA	DATA, READWRITE 
+		
+SUM SPACE 50
+	
 	END
