@@ -31,14 +31,14 @@ IO1CLR	EQU	0xE002801C							;Clear Bits In Register (Turn on LEDS)
 ;
 ;
 mainloop
-	bl updateDisplay
 	ldr r0, =0
 	bl press									;Poll to see if button has been pressed
-										;Comparison value for Increase Current Number
+												;Comparison value for Increase Current Number
+	;ldr r0, =0x00100000
 	cmp r0, #0									;if(press() != notPressed)
 	beq endSwitch								
-	cmp r0, #0x00400000							;Comparison value for Decrease Current Number
-	bge numberChange
+	cmp r0, #0x00200000							;Comparison value for Decrease Current Number
+	ble numberChange
 	b operatorChange
 endSwitch
 	b mainloop
@@ -68,7 +68,7 @@ stop	B	stop
 ;on the button pressed
 numberChangeSub
 	stmfd sp!, {lr}								;Save link register to stack
-	cmp r0, #0x00800000							;if(buttonPressed != '+')
+	cmp r0, #0x00100000							;if(buttonPressed != '+')
 	beq adding	
 	;subtracting
 	sub r12, r12, #1							;currentNumber--
@@ -92,7 +92,7 @@ operatorChangeSub
 	stmfd sp!, {lr}						
 	str r12, [r11] 								;Store current number to our "stack"
 	add r11, r11, #4 							;Increment stack address (full ascending stack)
-	cmp r0, #0x00200000 						;if(operator != '+')
+	cmp r0, #0x00400000 						;if(operator != '+')
 	beq addition
 	;subtraction
 	ldr r3, ='-'						
@@ -130,13 +130,13 @@ clearDisplay
 ;Updates the value displayed on the LEDS
 updateDisplay
 	stmfd sp!, {r0-r7, lr}
-	ldr r0, =0x00000001
 	mov r0, r1, lsl #16							;Shift currentNumber to the correct position to mask
+	bl reverseNumber
 	ldr	r1,=IO1SET
 	mov r2, #0x000f0000
 	str	r2,[r1]									;Turn the LEDs off
 	
-	ldr	r5,=40000000							;Value for delay
+	ldr	r5,=50000								;Value for delay
 dloop
 	cmp r5, #0								
 	ble	enddloop								;while(delay > 0){
@@ -146,7 +146,7 @@ enddloop
 	ldr	r1,=IO1CLR
 	str	r0,[r1]									;Turn on correct LED's
 	
-	ldr	r5,=40000000							;Value for delay
+	ldr	r5,=5000000								;Value for delay
 dloop1
 	cmp r5, #0								
 	ble	enddloop1								;while(delay > 0){
@@ -154,6 +154,34 @@ dloop1
 	b dloop1									;}
 enddloop1
 	ldmfd sp!, {r0-r7, pc}
+	
+;Reverse Number Subroutine
+;Reverses a 4 bit binary number placing it
+;in the correct position to turn on LEDS
+;
+;R0 number being converted
+;
+reverseNumber
+	stmfd SP!, {lr, r3-r8}						; store registers to stack
+	ldr r3, =0 									; count = 0
+	ldr r4, =0 									; reversed number 
+reverse
+	cmp r3, #36									; while(count < number of digits to reverse){
+	bge endreverse
+	and r5, r0, #1 								; mask out least significant bit
+	mov r0, r0, lsr #1 							; shift original number right 1 bit
+	mov r4, r4, lsl #1 							; shift reversed number left 1 bit
+	cmp r5, #1									; if(masked bit == 1){
+	beq push1
+	b endpush
+push1
+	orr r4, r4, #1								; mask in a 1
+endpush
+	add r3, r3, #1								; count++
+	b reverse
+endreverse
+	mov r0, r4
+	ldmfd SP!, {pc, r3-r8}	
 
 	
 		
