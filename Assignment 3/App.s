@@ -31,8 +31,10 @@ IO1CLR	EQU	0xE002801C							;Clear Bits In Register (Turn on LEDS)
 ;
 ;
 mainloop
-	;bl press									;Poll to see if button has been pressed
-	ldr r0, =0x00800000							;Comparison value for Increase Current Number
+	bl updateDisplay
+	ldr r0, =0
+	bl press									;Poll to see if button has been pressed
+										;Comparison value for Increase Current Number
 	cmp r0, #0									;if(press() != notPressed)
 	beq endSwitch								
 	cmp r0, #0x00400000							;Comparison value for Decrease Current Number
@@ -128,6 +130,7 @@ clearDisplay
 ;Updates the value displayed on the LEDS
 updateDisplay
 	stmfd sp!, {r0-r7, lr}
+	ldr r0, =0x00000001
 	mov r0, r1, lsl #16							;Shift currentNumber to the correct position to mask
 	ldr	r1,=IO1SET
 	mov r2, #0x000f0000
@@ -142,6 +145,14 @@ dloop
 enddloop
 	ldr	r1,=IO1CLR
 	str	r0,[r1]									;Turn on correct LED's
+	
+	ldr	r5,=40000000							;Value for delay
+dloop1
+	cmp r5, #0								
+	ble	enddloop1								;while(delay > 0){
+	subs r5,r5,#1								; 		delay--
+	b dloop1									;}
+enddloop1
 	ldmfd sp!, {r0-r7, pc}
 
 	
