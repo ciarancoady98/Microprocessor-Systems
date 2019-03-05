@@ -32,311 +32,391 @@ ARM Macro Assembler    Page 1
                                                             ster (Turn on LEDS)
                                                             
    18 00000000         
-   19 00000000 E59F11B4        ldr              r1,=IO1DIR
+   19 00000000 E59F12AC        ldr              r1,=IO1DIR
    20 00000004 E3A0280F        ldr              r2,=0x000f0000 ;Select P1.19--P
                                                             1.16
    21 00000008 E5812000        str              r2,[r1]     ;Make them outputs
-   22 0000000C E59F11AC        ldr              r1,=IO1SET
+   22 0000000C E59F12A4        ldr              r1,=IO1SET
    23 00000010 E5812000        str              r2,[r1]     ;Turn the LEDs off 
                                                             (Set bits)
-   24 00000014 E59FB1A8        ldr              r11, =SUM   ;Address in memory 
-                                                            where we store our 
-                                                            "stack"
-   25 00000018 E3A0C000        mov              r12, #0     ;R12 - number we ar
+   24 00000014 E3A0C000        mov              r12, #0     ;R12 - number we ar
                                                             e currently working
                                                              on
-   26 0000001C         
-   27 0000001C         
-   28 0000001C         ;MAIN PROGRAM LOOP
-   29 0000001C         ;
-   30 0000001C         ;
-   31 0000001C         ;
-   32 0000001C         mainloop
-   33 0000001C E3A00000        ldr              r0, =0
-   34 00000020 EB000022        bl               press       ;Poll to see if but
+   25 00000018 E3A0B000        mov              r11, #0     ;R11 - sum
+   26 0000001C E3A0A000        mov              r10, #0     ;R10 - operator
+   27 00000020 E3A09000        mov              r9, #0      ;R9 - last number
+   28 00000024 E3A08000        mov              r8, #0      ;R8 - last button
+   29 00000028         
+   30 00000028         ;MAIN PROGRAM LOOP
+   31 00000028         ;
+   32 00000028         ;
+   33 00000028         ;
+   34 00000028         
+   35 00000028 E3A06000        mov              r6, #0
+   36 0000002C         mainloop
+   37 0000002C         ;bl flash
+   38 0000002C E3A00000        ldr              r0, =0
+   39 00000030 EB00002C        bl               press       ;Poll to see if but
                                                             ton has been presse
                                                             d
-   35 00000024         ;Comparison value for Increase Current Number
-   36 00000024         ;ldr r0, =0x00100000
-   37 00000024 E3500001        cmp              r0, #1      ;if(press() != notP
-                                                            ressed)
-   38 00000028 0A000002        beq              endSwitch
-   39 0000002C E3500602        cmp              r0, #0x00200000 ;Comparison val
-                                                            ue for Decrease Cur
+   40 00000034         ;ldr r1, =DIVISORTABLE       ;Comparison value for Incre
+                       ase Current Number
+   41 00000034         ;ldr r0, [r1, r6]
+   42 00000034         ;add r6, r6, #4
 
 
 
 ARM Macro Assembler    Page 2 
 
 
+   43 00000034 E3500000        cmp              r0, #0      ;if(press() != notP
+                                                            ressed)
+   44 00000038 0A000002        beq              endSwitch
+   45 0000003C E3500602        cmp              r0, #0x00200000 ;Comparison val
+                                                            ue for Decrease Cur
                                                             rent Number
-   40 00000030 DA000001        ble              numberChange
-   41 00000034 EA000002        b                operatorChange
-   42 00000038         endSwitch
-   43 00000038 EAFFFFF7        b                mainloop
-   44 0000003C         
-   45 0000003C         ;BRANCH AND LINK TO SUBROUTINES
-   46 0000003C         ;Recuired as we need to branch and link
-   47 0000003C         ;Can get rid of this by calculating offset with the pc
-   48 0000003C         ;
-   49 0000003C         numberChange
-   50 0000003C         ;mov r1, r12
-   51 0000003C EB000003        bl               numberChangeSub
-   52 00000040 EAFFFFFC        b                endSwitch
-   53 00000044         
-   54 00000044         operatorChange
-   55 00000044         ;mov r1, r12
-   56 00000044 EB00000A        bl               operatorChangeSub
-   57 00000048 EAFFFFFA        b                endSwitch
-   58 0000004C         
-   59 0000004C EAFFFFFE 
+   46 00000040 DA000001        ble              numberChange
+   47 00000044 EA000002        b                operatorChange
+   48 00000048         endSwitch
+   49 00000048         
+   50 00000048 EAFFFFF7        b                mainloop
+   51 0000004C         
+   52 0000004C         ;BRANCH AND LINK TO SUBROUTINES
+   53 0000004C         ;Recuired as we need to branch and link
+   54 0000004C         ;Can get rid of this by calculating offset with the pc
+   55 0000004C         ;
+   56 0000004C         numberChange
+   57 0000004C EB000003        bl               numberChangeSub
+   58 00000050 EAFFFFFC        b                endSwitch
+   59 00000054         
+   60 00000054         operatorChange
+   61 00000054 EB00000B        bl               operatorChangeSub
+   62 00000058 EAFFFFFA        b                endSwitch
+   63 0000005C         
+   64 0000005C EAFFFFFE 
                        stop    B                stop
-   60 00000050         
-   61 00000050         ;numberChange Subroutine
-   62 00000050         ;
-   63 00000050         ;R0 - button pressed
-   64 00000050         ;R12 - current number
-   65 00000050         ;
-   66 00000050         ;Increses or decreases the current sum based
-   67 00000050         ;on the button pressed
-   68 00000050         numberChangeSub
-   69 00000050 E92D4000        stmfd            sp!, {lr}   ;Save link register
+   65 00000060         
+   66 00000060         ;numberChange Subroutine
+   67 00000060         ;
+   68 00000060         ;R0 - button pressed
+   69 00000060         ;R12 - current number
+   70 00000060         ;
+   71 00000060         ;Increses or decreases the current sum based
+   72 00000060         ;on the button pressed
+   73 00000060         numberChangeSub
+   74 00000060 E92D4000        stmfd            sp!, {lr}   ;Save link register
                                                              to stack
-   70 00000054 E3500601        cmp              r0, #0x00100000 ;if(buttonPress
+   75 00000064 E3A08000        mov              r8, #0
+   76 00000068 E3500601        cmp              r0, #0x00100000 ;if(buttonPress
                                                             ed != '+')
-   71 00000058 0A000001        beq              adding
-   72 0000005C         ;subtracting
-   73 0000005C E24CC001        sub              r12, r12, #1 ;currentNumber--
-   74 00000060 EA000000        b                endNumberChange
-   75 00000064         adding                               ;else if(buttonPres
+   77 0000006C 0A000001        beq              adding
+   78 00000070         ;subtracting
+   79 00000070 E24CC001        sub              r12, r12, #1 ;currentNumber--
+   80 00000074 EA000000        b                endNumberChange
+   81 00000078         adding                               ;else if(buttonPres
                                                             sed == '-')
-   76 00000064 E28CC001        add              r12, r12, #1 ;currentNumber++
-   77 00000068         endNumberChange
-   78 00000068 E1A0100C        mov              r1, r12
-   79 0000006C EB00002F        bl               updateDisplay
-   80 00000070 E8BD8000        ldmfd            sp!, { pc}
-   81 00000074         
-   82 00000074         
-   83 00000074         ;operatorChange Subroutine
-   84 00000074         ;
-   85 00000074         ;R0 - button pressed
-   86 00000074         ;R12 - current number
-   87 00000074         ;
-   88 00000074         ;Adds a plus or minus to our stack based
-   89 00000074         ;on the button pressed
-   90 00000074         operatorChangeSub
-   91 00000074 E92D4000        stmfd            sp!, {lr}
-   92 00000078         ;check if we are reversing
-   93 00000078 E2002001        and              r2, r0, #1  ;Mask out long pres
+   82 00000078 E28CC001        add              r12, r12, #1 ;currentNumber++
+   83 0000007C         endNumberChange
+   84 0000007C E1A0100C        mov              r1, r12
+   85 00000080 EB000068        bl               updateDisplay
+   86 00000084 E8BD8000        ldmfd            sp!, { pc}
+   87 00000088         
+   88 00000088         
+   89 00000088         ;operatorChange Subroutine
+   90 00000088         ;
+   91 00000088         ;R0 - button pressed
+   92 00000088         ;R12 - current number
+   93 00000088         ;
+   94 00000088         ;Adds a plus or minus to our stack based
 
 
 
 ARM Macro Assembler    Page 3 
 
 
-                                                            s bit
-   94 0000007C E3520001        cmp              r2, #1
-   95 00000080 0AFFFFFF        beq              longPressOperator
-   96 00000084         longPressOperator
-   97 00000084 E58BC000        str              r12, [r11]  ;Store current numb
-                                                            er to our "stack"
-   98 00000088 E28BB004        add              r11, r11, #4 ;Increment stack a
-                                                            ddress (full ascend
-                                                            ing stack)
-   99 0000008C E3500501        cmp              r0, #0x00400000 ;if(operator !=
+   95 00000088         ;on the button pressed
+   96 00000088         operatorChangeSub
+   97 00000088 E92D4000        stmfd            sp!, {lr}
+   98 0000008C         ;poll for long press
+   99 0000008C         ;bl longPress
+  100 0000008C         ;cmp r7, #1      ;if(!long press)
+  101 0000008C         ;beq endOpChange2PointO
+  102 0000008C E3A08001        mov              r8, #1      ;last button = oper
+                                                            ator
+  103 00000090 E35A0000        cmp              r10, #0     ;if(firstOp)
+  104 00000094 0A000000        beq              firstNumber
+  105 00000098 EA000001        b                endFirstNumber
+  106 0000009C         firstNumber
+  107 0000009C E1A0B00C        mov              r11, r12    ;sum = currentSum
+  108 000000A0 EA000004        b                updateCurrentOp
+  109 000000A4         endFirstNumber
+  110 000000A4 E35A002B        cmp              r10, #'+'
+  111 000000A8 1A000001        bne              minus
+  112 000000AC E08BB00C        add              r11, r11, r12 ;add
+  113 000000B0 EA000000        b                updateCurrentOp
+  114 000000B4         minus
+  115 000000B4 E04BB00C        sub              r11, r11, r12 ;sub
+  116 000000B8         
+  117 000000B8         
+  118 000000B8         
+  119 000000B8         updateCurrentOp
+  120 000000B8 E3500501        cmp              r0, #0x00400000 ;if(operator !=
                                                              '+')
-  100 00000090 0A000002        beq              addition
-  101 00000094         ;subtraction
-  102 00000094 E3A0302D        ldr              r3, ='-'
-  103 00000098 E58B3000        str              r3, [r11]   ;pushToStack('-')
-  104 0000009C EA000001        b                endOpChange
-  105 000000A0         addition
-  106 000000A0 E3A0302B        ldr              r3, ='+'    ;else if(operator =
+  121 000000BC 0A000003        beq              addition
+  122 000000C0         ;subtraction
+  123 000000C0 E3A0A02D        ldr              r10, ='-'   ;operator = -
+  124 000000C4 E1E0900C        mvn              r9, r12     ;last number = -cur
+                                                            rentNumber
+  125 000000C8 E2899001        add              r9, r9, #1
+  126 000000CC EA000001        b                endOpChange
+  127 000000D0         addition
+  128 000000D0 E3A0A02B        ldr              r10, ='+'   ;else if(operator =
                                                             = '+')
-  107 000000A4 E58B3000        str              r3, [r11]   ;pushToStack('+')
-  108 000000A8         endOpChange
-  109 000000A8 E28BB004        add              r11, r11, #4 ;Increment stack a
-                                                            ddress
-  110 000000AC E8BD8000        ldmfd            sp!, { pc}
-  111 000000B0         
-  112 000000B0         ;press subroutine
-  113 000000B0         ;polls the I/O pin register to see if a 
-  114 000000B0         ;button has been pressed
-  115 000000B0         press
-  116 000000B0 E92D4000        stmfd            sp!, {lr}
-  117 000000B4 E59F010C        ldr              r0, =IO1PIN
-  118 000000B8 E5900000        ldr              r0, [r0]    ;Poll Pin Register
-  119 000000BC E3A0160F        ldr              r1, =0x00f00000 ;Mask for Butto
+  129 000000D4 E1A0900C        mov              r9, r12     ;last number = curr
+                                                            entNumber
+  130 000000D8         endOpChange
+  131 000000D8 E3A0C000        mov              r12, #0     ;currentNumber = 0
+  132 000000DC         endOpChange2PointO
+  133 000000DC E1A0100B        mov              r1, r11
+  134 000000E0 EB000050        bl               updateDisplay
+  135 000000E4 E8BD8000        ldmfd            sp!, { pc}
+  136 000000E8         
+  137 000000E8         ;press subroutine
+  138 000000E8         ;polls the I/O pin register to see if a 
+  139 000000E8         ;button has been pressed
+  140 000000E8         press
+  141 000000E8 E92D4000        stmfd            sp!, {lr}
+  142 000000EC E59F01C8        ldr              r0, =IO1PIN
+  143 000000F0 E5900000        ldr              r0, [r0]    ;Poll Pin Register
+  144 000000F4 E3A0160F        ldr              r1, =0x00f00000 ;Mask for Butto
                                                             n bits
-  120 000000C0 E0000001        and              r0, r0, r1  ;Mask out Button bi
+  145 000000F8 E0000001        and              r0, r0, r1  ;Mask out Button bi
                                                             ts
-  121 000000C4 E1E00000        mvn              r0, r0      ;Invert all bits so
-                                                             we can use button 
-                                                            bits
-  122 000000C8 E0000001        and              r0, r0, r1  ;Mask out other bit
-                                                            s we don't need
-  123 000000CC EB000000        bl               longPress
-  124 000000D0 E8BD8000        ldmfd            sp!, {pc}
-  125 000000D4         
-  126 000000D4         ;longPress subroutine
-  127 000000D4         ;checks if press duration is longer than just one press
-  128 000000D4         longPress
-  129 000000D4 E92D4000        stmfd            sp!, {lr}
-  130 000000D8 E1A02000        mov              r2, r0      ;Temp store intial 
-                                                            button press
-  131 000000DC         ;wait delay time
-  132 000000DC E59F50E8        ldr              r5,=50000000 ;Value for delay
-  133 000000E0         dloop2
-  134 000000E0 E3550000        cmp              r5, #0
-  135 000000E4 DA000001        ble              enddloop2   ;while(delay > 0){
-  136 000000E8 E2555001        subs             r5,r5,#1    ;   delay--
-  137 000000EC EAFFFFFB        b                dloop2      ;}
-  138 000000F0         enddloop2
-  139 000000F0 E59F00D0        ldr              r0, =IO1PIN
+  146 000000FC E1E00000        mvn              r0, r0      ;Invert all bits so
 
 
 
 ARM Macro Assembler    Page 4 
 
 
-  140 000000F4 E5900000        ldr              r0, [r0]    ;Poll Pin Register
-  141 000000F8 E3A0160F        ldr              r1, =0x00f00000 ;Mask for Butto
-                                                            n bits
-  142 000000FC E0000001        and              r0, r0, r1  ;Mask out Button bi
-                                                            ts
-  143 00000100 E1E00000        mvn              r0, r0      ;Invert all bits so
                                                              we can use button 
                                                             bits
-  144 00000104 E0000001        and              r0, r0, r1  ;Mask out other bit
+  147 00000100 E0000001        and              r0, r0, r1  ;Mask out other bit
                                                             s we don't need
-  145 00000108 E1500002        cmp              r0, r2
-  146 0000010C 1A000001        bne              notLong
-  147 00000110         ;long press has occured
-  148 00000110 E3800001        orr              r0, r0, #1  ;Note this is a lon
-                                                            g press
-  149 00000114 EA000000        b                endLong
-  150 00000118         notLong
-  151 00000118 E1A00002        mov              r0, r2      ;button = temp
-  152 0000011C         endLong
-  153 0000011C E8BD8000        ldmfd            sp!, {pc}
-  154 00000120         
-  155 00000120         ;clearDisplay subroutine
-  156 00000120         ;Turns off all LEDS
-  157 00000120         clearDisplay
-  158 00000120 E92D40FF        stmfd            sp!, {r0-r7, lr}
-  159 00000124 E59F1094        ldr              r1,=IO1SET
-  160 00000128 E5810000        str              r0,[r1]     ;Turn the LEDs off
-  161 0000012C E8BD80FF        ldmfd            sp!, {r0-r7, pc}
-  162 00000130         
-  163 00000130         ;updateDisplay subroutine
-  164 00000130         ;Updates the value displayed on the LEDS
-  165 00000130         updateDisplay
-  166 00000130 E92D40FF        stmfd            sp!, {r0-r7, lr}
-  167 00000134 E1A00801        mov              r0, r1, lsl #16 ;Shift currentN
-                                                            umber to the correc
-                                                            t position to mask
-  168 00000138 EB00000F        bl               reverseNumber
-  169 0000013C E59F107C        ldr              r1,=IO1SET
-  170 00000140 E3A0280F        mov              r2, #0x000f0000
-  171 00000144 E5812000        str              r2,[r1]     ;Turn the LEDs off
-  172 00000148         
-  173 00000148 E59F5080        ldr              r5,=50000   ;Value for delay
-  174 0000014C         dloop
-  175 0000014C E3550000        cmp              r5, #0
-  176 00000150 DA000001        ble              enddloop    ;while(delay > 0){
-  177 00000154 E2555001        subs             r5,r5,#1    ;   delay--
-  178 00000158 EAFFFFFB        b                dloop       ;}
-  179 0000015C         enddloop
-  180 0000015C E59F1070        ldr              r1,=IO1CLR
-  181 00000160 E5810000        str              r0,[r1]     ;Turn on correct LE
-                                                            D's
-  182 00000164         
-  183 00000164 E59F506C        ldr              r5,=5000000 ;Value for delay
-  184 00000168         dloop1
-  185 00000168 E3550000        cmp              r5, #0
-  186 0000016C DA000001        ble              enddloop1   ;while(delay > 0){
-  187 00000170 E2555001        subs             r5,r5,#1    ;   delay--
-  188 00000174 EAFFFFFB        b                dloop1      ;}
-  189 00000178         enddloop1
+  148 00000104 E3500501        cmp              r0, #0x00400000
+  149 00000108 AA000000        bge              longPress
+  150 0000010C E8BD8000        ldmfd            sp!, {pc}
+  151 00000110         
+  152 00000110         ;long press subroutine
+  153 00000110         ;polls the I/O pin register to see if a 
+  154 00000110         ;button has been pressed
+  155 00000110         longPress
+  156 00000110 E92D4040        stmfd            sp!, {r6,lr}
+  157 00000114 E3A05000        mov              r5,#0
+  158 00000118 E59F61A0        ldr              r6, =50000000
+  159 0000011C         dloop3
+  160 0000011C E1550006        cmp              r5, r6
+  161 00000120 0A00000A        beq              enddloop3
+  162 00000124 E3500501        cmp              r0, #0x00400000
+  163 00000128 BA000008        blt              enddloop3   ;while(delay > 0 &&
+                                                             button=pressed){
+  164 0000012C EB000027        bl               flash
+  165 00000130 E59F0184        ldr              r0, =IO1PIN
+  166 00000134 E5900000        ldr              r0, [r0]    ;Poll Pin Register
+  167 00000138 E3A0160F        ldr              r1, =0x00f00000 ;Mask for Butto
+                                                            n bits
+  168 0000013C E0000001        and              r0, r0, r1  ;Mask out Button bi
+                                                            ts
+  169 00000140 E1E00000        mvn              r0, r0      ;Invert all bits so
+                                                             we can use button 
+                                                            bits
+  170 00000144 E0000001        and              r0, r0, r1  ;Mask out other bit
+                                                            s we don't need
+  171 00000148         
+  172 00000148 E2855001        add              r5,r5,#1    ;   delay--
+  173 0000014C EAFFFFF2        b                dloop3      ;
+  174 00000150         enddloop3
+  175 00000150 E59F516C        ldr              r5,=5000000 ;Value for delay
+  176 00000154         dloop15
+  177 00000154 E3550000        cmp              r5, #0
+  178 00000158 DA000001        ble              enddloop15  ;while(delay > 0){
+  179 0000015C E2555001        subs             r5,r5,#1    ;   delay--
+  180 00000160 EAFFFFFB        b                dloop15     ;}
+  181 00000164         enddloop15
+  182 00000164 E59F615C        ldr              r6, =500000
+  183 00000168 E1550006        cmp              r5, r6
+  184 0000016C BA000004        blt              endLongPress
+  185 00000170 E3500502        cmp              r0, #0x00800000
+  186 00000174 0A000004        beq              clearAll
+  187 00000178 EB00000C        bl               clearLastSub
+  188 0000017C E3A07001        mov              r7, #1
+  189 00000180 EA000000        b                theActualEnd
+  190 00000184         endLongPress
+  191 00000184 E3A07000        mov              r7, #0
+  192 00000188         theActualEnd
+  193 00000188 E8BD8040        ldmfd            sp!, {r6,pc}
+  194 0000018C         
+  195 0000018C         clearAll
+  196 0000018C EB000000        bl               clearAllSub
 
 
 
 ARM Macro Assembler    Page 5 
 
 
-  190 00000178 E8BD80FF        ldmfd            sp!, {r0-r7, pc}
-  191 0000017C         
-  192 0000017C         ;Reverse Number Subroutine
-  193 0000017C         ;Reverses a 4 bit binary number placing it
-  194 0000017C         ;in the correct position to turn on LEDS
-  195 0000017C         ;
-  196 0000017C         ;R0 number being converted
-  197 0000017C         ;
-  198 0000017C         reverseNumber
-  199 0000017C E92D41F8        stmfd            SP!, {lr, r3-r8} ;store registe
-                                                            rs to stack
-  200 00000180 E3A03000        ldr              r3, =0      ;count = 0
-  201 00000184 E3A04000        ldr              r4, =0      ;reversed number 
-  202 00000188         reverse
-  203 00000188 E3530024        cmp              r3, #36     ;while(count < numb
-                                                            er of digits to rev
-                                                            erse){
-  204 0000018C AA000008        bge              endreverse
-  205 00000190 E2005001        and              r5, r0, #1  ;mask out least sig
-                                                            nificant bit
-  206 00000194 E1A000A0        mov              r0, r0, lsr #1 ;shift original 
-                                                            number right 1 bit
-  207 00000198 E1A04084        mov              r4, r4, lsl #1 ;shift reversed 
-                                                            number left 1 bit
-  208 0000019C E3550001        cmp              r5, #1      ;if(masked bit == 1
-                                                            ){
-  209 000001A0 0A000000        beq              push1
-  210 000001A4 EA000000        b                endpush
-  211 000001A8         push1
-  212 000001A8 E3844001        orr              r4, r4, #1  ;mask in a 1
-  213 000001AC         endpush
-  214 000001AC E2833001        add              r3, r3, #1  ;count++
-  215 000001B0 EAFFFFF4        b                reverse
-  216 000001B4         endreverse
-  217 000001B4 E1A00004        mov              r0, r4
-  218 000001B8 E8BD81F8        ldmfd            SP!, {pc, r3-r8}
-  219 000001BC         
-  220 000001BC         
-  221 000001BC         
-  222 000001BC E0028018 
-              E0028014 
-              00000000 
-              E0028010 
-              02FAF080 
-              0000C350 
-              E002801C 
-              004C4B40         AREA             DATA, READWRITE
-  223 00000000         
-  224 00000000 00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
+  197 00000190 EAFFFFFB        b                endLongPress
+  198 00000194         
+  199 00000194         clearAllSub
+  200 00000194 E92D4000        stmfd            sp!, {lr}
+  201 00000198 E3A0C000        mov              r12, #0     ;R12 - number we ar
+                                                            e currently working
+                                                             on
+  202 0000019C E3A0B000        mov              r11, #0     ;R11 - sum
+  203 000001A0 E3A0A000        mov              r10, #0     ;R10 - operator
+  204 000001A4 E3A09000        mov              r9, #0      ;R9 - last number
+  205 000001A8 E3A08000        mov              r8, #0      ;R8 - last button
+  206 000001AC E8BD8000        ldmfd            sp!, {pc}
+  207 000001B0         
+  208 000001B0         clearLastSub
+  209 000001B0 E92D4000        stmfd            sp!, {lr}
+  210 000001B4 E3580000        cmp              r8, #0
+  211 000001B8 0A000000        beq              numberLast
+  212 000001BC E08BB009        add              r11, r11, r9
+  213 000001C0         numberLast
+  214 000001C0 E3A0A000        mov              r10, #0
+  215 000001C4 E3A09000        mov              r9, #0
+  216 000001C8 E3A08000        mov              r8, #0
+  217 000001CC E8BD8000        ldmfd            sp!, {pc}
+  218 000001D0         
+  219 000001D0         ;clearDisplay subroutine
+  220 000001D0         ;Turns off all LEDS
+  221 000001D0         flash
+  222 000001D0 E92D40FF        stmfd            sp!, {r0-r7, lr}
+  223 000001D4 E59F10F0        ldr              r1,=IO1CLR
+  224 000001D8 E3A0080F        mov              r0, #0x000f0000
+  225 000001DC E5810000        str              r0,[r1]     ;Turn the LEDs off
+  226 000001E0 E59F50E0        ldr              r5, =500000
+  227 000001E4         dloop12
+  228 000001E4 E3550000        cmp              r5, #0
+  229 000001E8 DA000001        ble              enddloop12  ;while(delay > 0){
+  230 000001EC E2555001        subs             r5,r5,#1    ;   delay--
+  231 000001F0 EAFFFFFB        b                dloop12     ;}
+  232 000001F4         enddloop12
+  233 000001F4 E59F10BC        ldr              r1,=IO1SET
+  234 000001F8 E5810000        str              r0,[r1]
+  235 000001FC         
+  236 000001FC E59F10C8        ldr              r1,=IO1CLR
+  237 00000200 E3A0080F        mov              r0, #0x000f0000
+  238 00000204 E5810000        str              r0,[r1]     ;Turn the LEDs off
+  239 00000208 E59F50B8        ldr              r5, =500000
+  240 0000020C         dloop17
+  241 0000020C E3550000        cmp              r5, #0
+  242 00000210 DA000001        ble              enddloop17  ;while(delay > 0){
+  243 00000214 E2555001        subs             r5,r5,#1    ;   delay--
+  244 00000218 EAFFFFFB        b                dloop17     ;}
+  245 0000021C         enddloop17
+  246 0000021C E59F1094        ldr              r1,=IO1SET
+  247 00000220 E5810000        str              r0,[r1]
+  248 00000224         
+  249 00000224 E8BD80FF        ldmfd            sp!, {r0-r7, pc}
+  250 00000228         
+  251 00000228         ;updateDisplay subroutine
+  252 00000228         ;Updates the value displayed on the LEDS
+  253 00000228         updateDisplay
 
 
 
 ARM Macro Assembler    Page 6 
 
 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00    SUM     SPACE            50
-  225 00000032         
-  226 00000032                 END
+  254 00000228 E92D40FF        stmfd            sp!, {r0-r7, lr}
+  255 0000022C E1A00801        mov              r0, r1, lsl #16 ;Shift currentN
+                                                            umber to the correc
+                                                            t position to mask
+  256 00000230 EB00000F        bl               reverseNumber
+  257 00000234 E59F107C        ldr              r1,=IO1SET
+  258 00000238 E3A0280F        mov              r2, #0x000f0000
+  259 0000023C E5812000        str              r2,[r1]     ;Turn the LEDs off
+  260 00000240         
+  261 00000240 E59F5088        ldr              r5,=50000   ;Value for delay
+  262 00000244         dloop
+  263 00000244 E3550000        cmp              r5, #0
+  264 00000248 DA000001        ble              enddloop    ;while(delay > 0){
+  265 0000024C E2555001        subs             r5,r5,#1    ;   delay--
+  266 00000250 EAFFFFFB        b                dloop       ;}
+  267 00000254         enddloop
+  268 00000254 E59F1070        ldr              r1,=IO1CLR
+  269 00000258 E5810000        str              r0,[r1]     ;Turn on correct LE
+                                                            D's
+  270 0000025C         
+  271 0000025C E59F5060        ldr              r5,=5000000 ;Value for delay
+  272 00000260         dloop1
+  273 00000260 E3550000        cmp              r5, #0
+  274 00000264 DA000001        ble              enddloop1   ;while(delay > 0){
+  275 00000268 E2555001        subs             r5,r5,#1    ;   delay--
+  276 0000026C EAFFFFFB        b                dloop1      ;}
+  277 00000270         enddloop1
+  278 00000270 E8BD80FF        ldmfd            sp!, {r0-r7, pc}
+  279 00000274         
+  280 00000274         ;Reverse Number Subroutine
+  281 00000274         ;Reverses a 4 bit binary number placing it
+  282 00000274         ;in the correct position to turn on LEDS
+  283 00000274         ;
+  284 00000274         ;R0 number being converted
+  285 00000274         ;
+  286 00000274         reverseNumber
+  287 00000274 E92D41F8        stmfd            SP!, {lr, r3-r8} ; store regist
+                                                            ers to stack
+  288 00000278 E3A03000        ldr              r3, =0      ; count = 0
+  289 0000027C E3A04000        ldr              r4, =0      ; reversed number 
+  290 00000280         reverse
+  291 00000280 E3530024        cmp              r3, #36     ; while(count < num
+                                                            ber of digits to re
+                                                            verse){
+  292 00000284 AA000008        bge              endreverse
+  293 00000288 E2005001        and              r5, r0, #1  ; mask out least si
+                                                            gnificant bit
+  294 0000028C E1A000A0        mov              r0, r0, lsr #1 ; shift original
+                                                             number right 1 bit
+                                                            
+  295 00000290 E1A04084        mov              r4, r4, lsl #1 ; shift reversed
+                                                             number left 1 bit
+  296 00000294 E3550001        cmp              r5, #1      ; if(masked bit == 
+                                                            1){
+  297 00000298 0A000000        beq              push1
+  298 0000029C EA000000        b                endpush
+  299 000002A0         push1
+  300 000002A0 E3844001        orr              r4, r4, #1  ; mask in a 1
+  301 000002A4         endpush
+
+
+
+ARM Macro Assembler    Page 7 
+
+
+  302 000002A4 E2833001        add              r3, r3, #1  ; count++
+  303 000002A8 EAFFFFF4        b                reverse
+  304 000002AC         endreverse
+  305 000002AC E1A00004        mov              r0, r4
+  306 000002B0 E8BD81F8        ldmfd            SP!, {pc, r3-r8}
+  307 000002B4         
+  308 000002B4         
+  309 000002B4 E0028018 
+              E0028014 
+              E0028010 
+              02FAF080 
+              004C4B40 
+              0007A120 
+              E002801C 
+              0000C350         AREA             Table, DATA, READWRITE
+  310 00000000         
+  311 00000000         DIVISORTABLE
+  312 00000000 00100000        DCD              0x00100000
+  313 00000004 00400000        DCD              0x00400000
+  314 00000008 00100000        DCD              0x00100000
+  315 0000000C 00400000        DCD              0x00400000
+  316 00000010         
+  317 00000010                 END
 Command Line: --debug --xref --diag_suppress=9931 --apcs=interwork --depend=.\a
 pp.d -o.\app.o -IC:\Keil_v5\ARM\RV31\INC -IC:\Keil_v5\ARM\CMSIS\Include -IC:\Ke
 il_v5\ARM\Inc\Philips --predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 
@@ -355,57 +435,57 @@ Symbol: AsmTemplate
    Uses
       None
 Comment: AsmTemplate unused
-adding 00000064
+adding 00000078
 
 Symbol: adding
    Definitions
-      At line 75 in file App.s
+      At line 81 in file App.s
    Uses
-      At line 71 in file App.s
+      At line 77 in file App.s
 Comment: adding used once
-addition 000000A0
+addition 000000D0
 
 Symbol: addition
    Definitions
-      At line 105 in file App.s
+      At line 127 in file App.s
    Uses
-      At line 100 in file App.s
+      At line 121 in file App.s
 Comment: addition used once
-clearDisplay 00000120
+clearAll 0000018C
 
-Symbol: clearDisplay
+Symbol: clearAll
    Definitions
-      At line 157 in file App.s
+      At line 195 in file App.s
    Uses
-      None
-Comment: clearDisplay unused
-dloop 0000014C
+      At line 186 in file App.s
+Comment: clearAll used once
+clearAllSub 00000194
+
+Symbol: clearAllSub
+   Definitions
+      At line 199 in file App.s
+   Uses
+      At line 196 in file App.s
+Comment: clearAllSub used once
+clearLastSub 000001B0
+
+Symbol: clearLastSub
+   Definitions
+      At line 208 in file App.s
+   Uses
+      At line 187 in file App.s
+Comment: clearLastSub used once
+dloop 00000244
 
 Symbol: dloop
    Definitions
-      At line 174 in file App.s
+      At line 262 in file App.s
    Uses
-      At line 178 in file App.s
+      At line 266 in file App.s
 Comment: dloop used once
-dloop1 00000168
+dloop1 00000260
 
 Symbol: dloop1
-   Definitions
-      At line 184 in file App.s
-   Uses
-      At line 188 in file App.s
-Comment: dloop1 used once
-dloop2 000000E0
-
-Symbol: dloop2
-   Definitions
-      At line 133 in file App.s
-   Uses
-      At line 137 in file App.s
-Comment: dloop2 used once
-endLong 0000011C
-
-Symbol: endLong
 
 
 
@@ -413,183 +493,293 @@ ARM Macro Assembler    Page 2 Alphabetic symbol ordering
 Relocatable symbols
 
    Definitions
-      At line 152 in file App.s
+      At line 272 in file App.s
    Uses
-      At line 149 in file App.s
-Comment: endLong used once
-endNumberChange 00000068
+      At line 276 in file App.s
+Comment: dloop1 used once
+dloop12 000001E4
+
+Symbol: dloop12
+   Definitions
+      At line 227 in file App.s
+   Uses
+      At line 231 in file App.s
+Comment: dloop12 used once
+dloop15 00000154
+
+Symbol: dloop15
+   Definitions
+      At line 176 in file App.s
+   Uses
+      At line 180 in file App.s
+Comment: dloop15 used once
+dloop17 0000020C
+
+Symbol: dloop17
+   Definitions
+      At line 240 in file App.s
+   Uses
+      At line 244 in file App.s
+Comment: dloop17 used once
+dloop3 0000011C
+
+Symbol: dloop3
+   Definitions
+      At line 159 in file App.s
+   Uses
+      At line 173 in file App.s
+Comment: dloop3 used once
+endFirstNumber 000000A4
+
+Symbol: endFirstNumber
+   Definitions
+      At line 109 in file App.s
+   Uses
+      At line 105 in file App.s
+Comment: endFirstNumber used once
+endLongPress 00000184
+
+Symbol: endLongPress
+   Definitions
+      At line 190 in file App.s
+   Uses
+      At line 184 in file App.s
+      At line 197 in file App.s
+
+endNumberChange 0000007C
 
 Symbol: endNumberChange
    Definitions
-      At line 77 in file App.s
-   Uses
-      At line 74 in file App.s
-Comment: endNumberChange used once
-endOpChange 000000A8
-
-Symbol: endOpChange
-   Definitions
-      At line 108 in file App.s
-   Uses
-      At line 104 in file App.s
-Comment: endOpChange used once
-endSwitch 00000038
-
-Symbol: endSwitch
-   Definitions
-      At line 42 in file App.s
-   Uses
-      At line 38 in file App.s
-      At line 52 in file App.s
-      At line 57 in file App.s
-
-enddloop 0000015C
-
-Symbol: enddloop
-   Definitions
-      At line 179 in file App.s
-   Uses
-      At line 176 in file App.s
-Comment: enddloop used once
-enddloop1 00000178
-
-Symbol: enddloop1
-   Definitions
-      At line 189 in file App.s
-   Uses
-      At line 186 in file App.s
-Comment: enddloop1 used once
-enddloop2 000000F0
-
-Symbol: enddloop2
-   Definitions
-      At line 138 in file App.s
-   Uses
-      At line 135 in file App.s
-Comment: enddloop2 used once
-endpush 000001AC
-
-Symbol: endpush
-   Definitions
+      At line 83 in file App.s
 
 
 
 ARM Macro Assembler    Page 3 Alphabetic symbol ordering
 Relocatable symbols
 
-      At line 213 in file App.s
    Uses
-      At line 210 in file App.s
-Comment: endpush used once
-endreverse 000001B4
+      At line 80 in file App.s
+Comment: endNumberChange used once
+endOpChange 000000D8
 
-Symbol: endreverse
+Symbol: endOpChange
    Definitions
-      At line 216 in file App.s
+      At line 130 in file App.s
    Uses
-      At line 204 in file App.s
-Comment: endreverse used once
-longPress 000000D4
+      At line 126 in file App.s
+Comment: endOpChange used once
+endOpChange2PointO 000000DC
 
-Symbol: longPress
+Symbol: endOpChange2PointO
    Definitions
-      At line 128 in file App.s
+      At line 132 in file App.s
    Uses
-      At line 123 in file App.s
-Comment: longPress used once
-longPressOperator 00000084
+      None
+Comment: endOpChange2PointO unused
+endSwitch 00000048
 
-Symbol: longPressOperator
+Symbol: endSwitch
    Definitions
-      At line 96 in file App.s
+      At line 48 in file App.s
    Uses
-      At line 95 in file App.s
-Comment: longPressOperator used once
-mainloop 0000001C
+      At line 44 in file App.s
+      At line 58 in file App.s
+      At line 62 in file App.s
 
-Symbol: mainloop
-   Definitions
-      At line 32 in file App.s
-   Uses
-      At line 43 in file App.s
-Comment: mainloop used once
-notLong 00000118
+enddloop 00000254
 
-Symbol: notLong
+Symbol: enddloop
    Definitions
-      At line 150 in file App.s
+      At line 267 in file App.s
    Uses
-      At line 146 in file App.s
-Comment: notLong used once
-numberChange 0000003C
+      At line 264 in file App.s
+Comment: enddloop used once
+enddloop1 00000270
 
-Symbol: numberChange
+Symbol: enddloop1
    Definitions
-      At line 49 in file App.s
+      At line 277 in file App.s
    Uses
-      At line 40 in file App.s
-Comment: numberChange used once
-numberChangeSub 00000050
+      At line 274 in file App.s
+Comment: enddloop1 used once
+enddloop12 000001F4
 
-Symbol: numberChangeSub
+Symbol: enddloop12
    Definitions
-      At line 68 in file App.s
+      At line 232 in file App.s
    Uses
-      At line 51 in file App.s
+      At line 229 in file App.s
+Comment: enddloop12 used once
+enddloop15 00000164
+
+Symbol: enddloop15
+   Definitions
+      At line 181 in file App.s
+   Uses
 
 
 
 ARM Macro Assembler    Page 4 Alphabetic symbol ordering
 Relocatable symbols
 
+      At line 178 in file App.s
+Comment: enddloop15 used once
+enddloop17 0000021C
+
+Symbol: enddloop17
+   Definitions
+      At line 245 in file App.s
+   Uses
+      At line 242 in file App.s
+Comment: enddloop17 used once
+enddloop3 00000150
+
+Symbol: enddloop3
+   Definitions
+      At line 174 in file App.s
+   Uses
+      At line 161 in file App.s
+      At line 163 in file App.s
+
+endpush 000002A4
+
+Symbol: endpush
+   Definitions
+      At line 301 in file App.s
+   Uses
+      At line 298 in file App.s
+Comment: endpush used once
+endreverse 000002AC
+
+Symbol: endreverse
+   Definitions
+      At line 304 in file App.s
+   Uses
+      At line 292 in file App.s
+Comment: endreverse used once
+firstNumber 0000009C
+
+Symbol: firstNumber
+   Definitions
+      At line 106 in file App.s
+   Uses
+      At line 104 in file App.s
+Comment: firstNumber used once
+flash 000001D0
+
+Symbol: flash
+   Definitions
+      At line 221 in file App.s
+   Uses
+      At line 164 in file App.s
+Comment: flash used once
+longPress 00000110
+
+Symbol: longPress
+   Definitions
+      At line 155 in file App.s
+   Uses
+      At line 149 in file App.s
+Comment: longPress used once
+
+
+
+ARM Macro Assembler    Page 5 Alphabetic symbol ordering
+Relocatable symbols
+
+mainloop 0000002C
+
+Symbol: mainloop
+   Definitions
+      At line 36 in file App.s
+   Uses
+      At line 50 in file App.s
+Comment: mainloop used once
+minus 000000B4
+
+Symbol: minus
+   Definitions
+      At line 114 in file App.s
+   Uses
+      At line 111 in file App.s
+Comment: minus used once
+numberChange 0000004C
+
+Symbol: numberChange
+   Definitions
+      At line 56 in file App.s
+   Uses
+      At line 46 in file App.s
+Comment: numberChange used once
+numberChangeSub 00000060
+
+Symbol: numberChangeSub
+   Definitions
+      At line 73 in file App.s
+   Uses
+      At line 57 in file App.s
 Comment: numberChangeSub used once
-operatorChange 00000044
+numberLast 000001C0
+
+Symbol: numberLast
+   Definitions
+      At line 213 in file App.s
+   Uses
+      At line 211 in file App.s
+Comment: numberLast used once
+operatorChange 00000054
 
 Symbol: operatorChange
    Definitions
-      At line 54 in file App.s
+      At line 60 in file App.s
    Uses
-      At line 41 in file App.s
+      At line 47 in file App.s
 Comment: operatorChange used once
-operatorChangeSub 00000074
+operatorChangeSub 00000088
 
 Symbol: operatorChangeSub
    Definitions
-      At line 90 in file App.s
+      At line 96 in file App.s
    Uses
-      At line 56 in file App.s
+      At line 61 in file App.s
 Comment: operatorChangeSub used once
-press 000000B0
+press 000000E8
 
 Symbol: press
+
+
+
+ARM Macro Assembler    Page 6 Alphabetic symbol ordering
+Relocatable symbols
+
    Definitions
-      At line 115 in file App.s
+      At line 140 in file App.s
    Uses
-      At line 34 in file App.s
+      At line 39 in file App.s
 Comment: press used once
-push1 000001A8
+push1 000002A0
 
 Symbol: push1
    Definitions
-      At line 211 in file App.s
+      At line 299 in file App.s
    Uses
-      At line 209 in file App.s
+      At line 297 in file App.s
 Comment: push1 used once
-reverse 00000188
+reverse 00000280
 
 Symbol: reverse
    Definitions
-      At line 202 in file App.s
+      At line 290 in file App.s
    Uses
-      At line 215 in file App.s
+      At line 303 in file App.s
 Comment: reverse used once
-reverseNumber 0000017C
+reverseNumber 00000274
 
 Symbol: reverseNumber
    Definitions
-      At line 198 in file App.s
+      At line 286 in file App.s
    Uses
-      At line 168 in file App.s
+      At line 256 in file App.s
 Comment: reverseNumber used once
 start 00000000
 
@@ -599,51 +789,69 @@ Symbol: start
    Uses
       At line 7 in file App.s
 Comment: start used once
-stop 0000004C
-
-
-
-
-ARM Macro Assembler    Page 5 Alphabetic symbol ordering
-Relocatable symbols
+stop 0000005C
 
 Symbol: stop
    Definitions
-      At line 59 in file App.s
+      At line 64 in file App.s
    Uses
-      At line 59 in file App.s
+      At line 64 in file App.s
 Comment: stop used once
-updateDisplay 00000130
+theActualEnd 00000188
+
+Symbol: theActualEnd
+   Definitions
+      At line 192 in file App.s
+   Uses
+      At line 189 in file App.s
+Comment: theActualEnd used once
+updateCurrentOp 000000B8
+
+Symbol: updateCurrentOp
+   Definitions
+      At line 119 in file App.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 7 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 108 in file App.s
+      At line 113 in file App.s
+
+updateDisplay 00000228
 
 Symbol: updateDisplay
    Definitions
-      At line 165 in file App.s
+      At line 253 in file App.s
    Uses
-      At line 79 in file App.s
-Comment: updateDisplay used once
-31 symbols
+      At line 85 in file App.s
+      At line 134 in file App.s
+
+45 symbols
 
 
 
 ARM Macro Assembler    Page 1 Alphabetic symbol ordering
 Relocatable symbols
 
-DATA 00000000
+DIVISORTABLE 00000000
 
-Symbol: DATA
+Symbol: DIVISORTABLE
    Definitions
-      At line 222 in file App.s
+      At line 311 in file App.s
    Uses
       None
-Comment: DATA unused
-SUM 00000000
+Comment: DIVISORTABLE unused
+Table 00000000
 
-Symbol: SUM
+Symbol: Table
    Definitions
-      At line 224 in file App.s
+      At line 309 in file App.s
    Uses
-      At line 24 in file App.s
-Comment: SUM used once
+      None
+Comment: Table unused
 2 symbols
 
 
@@ -657,8 +865,10 @@ Symbol: IO1CLR
    Definitions
       At line 17 in file App.s
    Uses
-      At line 180 in file App.s
-Comment: IO1CLR used once
+      At line 223 in file App.s
+      At line 236 in file App.s
+      At line 268 in file App.s
+
 IO1DIR E0028018
 
 Symbol: IO1DIR
@@ -673,8 +883,8 @@ Symbol: IO1PIN
    Definitions
       At line 14 in file App.s
    Uses
-      At line 117 in file App.s
-      At line 139 in file App.s
+      At line 142 in file App.s
+      At line 165 in file App.s
 
 IO1SET E0028014
 
@@ -683,8 +893,9 @@ Symbol: IO1SET
       At line 16 in file App.s
    Uses
       At line 22 in file App.s
-      At line 159 in file App.s
-      At line 169 in file App.s
+      At line 233 in file App.s
+      At line 246 in file App.s
+      At line 257 in file App.s
 
 4 symbols
 
@@ -702,4 +913,4 @@ Symbol: main
       None
 Comment: main unused
 1 symbol
-373 symbols in table
+387 symbols in table

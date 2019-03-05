@@ -18,28 +18,35 @@ IO1CLR	EQU	0xE002801C							;Clear Bits In Register (Turn on LEDS)
 
 	ldr	r1,=IO1DIR
 	ldr	r2,=0x000f0000							;Select P1.19--P1.16
-	str	r2,[r1]									;Make them outputs
+	str	r2,[r1]								;Make them outputs
 	ldr	r1,=IO1SET
 	str	r2,[r1]									;Turn the LEDs off (Set bits)
-	ldr r11, =SUM 								;Address in memory where we store our "stack"
 	mov r12, #0									;R12 - number we are currently working on
-	
+	mov r11, #0								;R11 - sum
+	mov r10, #0								;R10 - operator
+	mov r9, #0 								;R9 - last number
+	mov r8, #0								;R8 - last button
 	
 ;MAIN PROGRAM LOOP
 ;
 ;
 ;
+	
+	mov r6, #0
 mainloop
+	;bl flash
 	ldr r0, =0
-	bl press									;Poll to see if button has been pressed
-												;Comparison value for Increase Current Number
-	;ldr r0, =0x00100000
-	cmp r0, #1									;if(press() != notPressed)
+	bl press								;Poll to see if button has been pressed
+	;ldr r1, =DIVISORTABLE							;Comparison value for Increase Current Number
+	;ldr r0, [r1, r6]
+	;add r6, r6, #4
+	cmp r0, #0								;if(press() != notPressed)
 	beq endSwitch								
 	cmp r0, #0x00200000							;Comparison value for Decrease Current Number
 	ble numberChange
 	b operatorChange
 endSwitch
+	
 	b mainloop
 	
 ;BRANCH AND LINK TO SUBROUTINES
@@ -47,12 +54,10 @@ endSwitch
 ;Can get rid of this by calculating offset with the pc
 ;
 numberChange
-	;mov r1, r12
 	bl numberChangeSub
 	b endSwitch
 	
 operatorChange
-	;mov r1, r12
 	bl operatorChangeSub
 	b endSwitch
 
@@ -67,12 +72,13 @@ stop	B	stop
 ;on the button pressed
 numberChangeSub
 	stmfd sp!, {lr}								;Save link register to stack
+	mov r8, #0
 	cmp r0, #0x00100000							;if(buttonPressed != '+')
 	beq adding	
 	;subtracting
 	sub r12, r12, #1							;currentNumber--
 	b endNumberChange
-adding											;else if(buttonPressed == '-')
+adding										;else if(buttonPressed == '-')
 	add r12, r12, #1							;currentNumber++
 endNumberChange
 	mov r1, r12
@@ -88,25 +94,44 @@ endNumberChange
 ;Adds a plus or minus to our stack based
 ;on the button pressed
 operatorChangeSub
-	stmfd sp!, {lr}	
-	;check if we are reversing
-	and r2, r0, #1								;Mask out long press bit
-	cmp r2, #1
-	beq longPressOperator
-longPressOperator
-	str r12, [r11] 								;Store current number to our "stack"
-	add r11, r11, #4 							;Increment stack address (full ascending stack)
-	cmp r0, #0x00400000 						;if(operator != '+')
+	stmfd sp!, {lr}						
+	;poll for long press
+	;bl longPress
+	;cmp r7, #1						;if(!long press)
+	;beq endOpChange2PointO
+	mov r8, #1						;last button = operator
+	cmp r10, #0						;if(firstOp)
+	beq firstNumber
+	b endFirstNumber
+firstNumber
+	mov r11, r12						;sum = currentSum
+	b updateCurrentOp
+endFirstNumber
+	cmp r10, #'+'						
+	bne minus
+	add r11, r11, r12					;add
+	b updateCurrentOp
+minus
+	sub r11, r11, r12					;sub
+
+
+	
+updateCurrentOp
+	cmp r0, #0x00400000 					;if(operator != '+')
 	beq addition
 	;subtraction
-	ldr r3, ='-'						
-	str r3, [r11]								;pushToStack('-')
+	ldr r10, ='-'						;operator = -
+	mvn r9, r12						;last number = -currentNumber
+	add r9, r9, #1
 	b endOpChange
 addition
-	ldr r3, ='+'								;else if(operator == '+')
-	str r3, [r11]								;pushToStack('+')
+	ldr r10, ='+'						;else if(operator == '+')
+	mov r9, r12						;last number = currentNumber
 endOpChange
-	add r11, r11, #4 							;Increment stack address
+	mov r12, #0						;currentNumber = 0
+endOpChange2PointO
+	mov r1, r11
+	bl updateDisplay
 	ldmfd sp!, { pc}
 
 ;press subroutine
@@ -119,45 +144,108 @@ press
 	ldr r1, =0x00f00000							;Mask for Button bits
 	and r0, r0, r1								;Mask out Button bits
 	mvn r0, r0									;Invert all bits so we can use button bits
-	and r0, r0, r1								;Mask out other bits we don't need
-	bl longPress
+	and r0, r0, r1	;Mask out other bits we don't need
+	cmp r0, #0x00400000
+	bge longPress
 	ldmfd sp!, {pc}
 	
-;longPress subroutine
-;checks if press duration is longer than just one press
+;long press subroutine
+;polls the I/O pin register to see if a 
+;button has been pressed
 longPress
-	stmfd sp!, {lr}
-	mov r2, r0									;Temp store intial button press
-	;wait delay time
-	ldr	r5,=5000000								;Value for delay
-dloop2
-	cmp r5, #0								
-	ble	enddloop2								;while(delay > 0){
-	subs r5,r5,#1								; 		delay--
-	b dloop2									;}
-enddloop2
-	ldr r0, =IO1PIN													
+	stmfd sp!, {r0,r6,lr}
+	mov r5,#0
+	ldr r6, =50000000
+dloop3
+	cmp r5, r6
+	beq enddloop3
+	cmp r0, #0x00400000								
+	blt enddloop3	;while(delay > 0 && button=pressed){
+	bl flash
+	ldr r0, =IO1PIN												
 	ldr r0, [r0]								;Poll Pin Register
 	ldr r1, =0x00f00000							;Mask for Button bits
 	and r0, r0, r1								;Mask out Button bits
-	mvn r0, r0									;Invert all bits so we can use button bits
+	mvn r0, r0								;Invert all bits so we can use button bits
 	and r0, r0, r1								;Mask out other bits we don't need
-	cmp r0, r2
-	bne notLong
-	;long press has occured
-	orr r0, r0, #1								;Note this is a long press
-	b endLong
-notLong
-	mov r0, r2									;button = temp
-endLong
+	
+	add r5,r5,#1								; 		delay--
+	b dloop3									;
+enddloop3
+	ldr	r5,=5000000								;Value for delay
+dloop15
+	cmp r5, #0								
+	ble	enddloop15								;while(delay > 0){
+	subs r5,r5,#1								; 		delay--
+	b dloop15									;}
+enddloop15
+	ldr r6, =500000
+	cmp r5, r6
+	blt endLongPress
+	cmp r0, #0x00800000
+	beq clearAll
+	bl clearLastSub
+	mov r7, #1
+	b theActualEnd
+endLongPress
+	mov r7, #0
+theActualEnd
+	ldmfd sp!, {r0,r6,pc}
+	
+clearAll
+	bl clearAllSub
+	b endLongPress
+	
+clearAllSub
+	stmfd sp!, {lr}
+	mov r12, #0									;R12 - number we are currently working on
+	mov r11, #0								;R11 - sum
+	mov r10, #0								;R10 - operator
+	mov r9, #0 								;R9 - last number
+	mov r8, #0								;R8 - last button
+	ldmfd sp!, {pc}
+	
+clearLastSub
+	stmfd sp!, {lr}
+	cmp r8, #0
+	beq numberLast
+	add r11, r11, r9
+numberLast
+	mov r10, #0								
+	mov r9, #0 
+	mov r8, #0
 	ldmfd sp!, {pc}
 	
 ;clearDisplay subroutine
 ;Turns off all LEDS
-clearDisplay
+flash
 	stmfd sp!, {r0-r7, lr}
+	ldr	r1,=IO1CLR
+	mov r0, #0x000f0000
+	str	r0,[r1]		;Turn the LEDs off
+	ldr r5, =500000
+dloop12
+	cmp r5, #0								
+	ble	enddloop12								;while(delay > 0){
+	subs r5,r5,#1								; 		delay--
+	b dloop12									;}
+enddloop12
 	ldr	r1,=IO1SET
-	str	r0,[r1]									;Turn the LEDs off
+	str	r0,[r1]	
+	
+	ldr	r1,=IO1CLR
+	mov r0, #0x000f0000
+	str	r0,[r1]		;Turn the LEDs off
+	ldr r5, =500000
+dloop17
+	cmp r5, #0								
+	ble	enddloop17								;while(delay > 0){
+	subs r5,r5,#1								; 		delay--
+	b dloop17									;}
+enddloop17
+	ldr	r1,=IO1SET
+	str	r0,[r1]	
+
 	ldmfd sp!, {r0-r7, pc}
 	
 ;updateDisplay subroutine
@@ -196,31 +284,34 @@ enddloop1
 ;R0 number being converted
 ;
 reverseNumber
-	stmfd SP!, {lr, r3-r8}						;store registers to stack
-	ldr r3, =0 									;count = 0
-	ldr r4, =0 									;reversed number 
+	stmfd SP!, {lr, r3-r8}						; store registers to stack
+	ldr r3, =0 									; count = 0
+	ldr r4, =0 									; reversed number 
 reverse
-	cmp r3, #36									;while(count < number of digits to reverse){
+	cmp r3, #36									; while(count < number of digits to reverse){
 	bge endreverse
-	and r5, r0, #1 								;mask out least significant bit
-	mov r0, r0, lsr #1 							;shift original number right 1 bit
-	mov r4, r4, lsl #1 							;shift reversed number left 1 bit
-	cmp r5, #1									;if(masked bit == 1){
+	and r5, r0, #1 								; mask out least significant bit
+	mov r0, r0, lsr #1 							; shift original number right 1 bit
+	mov r4, r4, lsl #1 							; shift reversed number left 1 bit
+	cmp r5, #1									; if(masked bit == 1){
 	beq push1
 	b endpush
 push1
-	orr r4, r4, #1								;mask in a 1
+	orr r4, r4, #1								; mask in a 1
 endpush
-	add r3, r3, #1								;count++
+	add r3, r3, #1								; count++
 	b reverse
 endreverse
-	mov r0, r4				
+	mov r0, r4
 	ldmfd SP!, {pc, r3-r8}	
-
 	
-		
-	AREA	DATA, READWRITE 
-		
-SUM SPACE 50
+	
+	AREA	Table, DATA, READWRITE
+			
+DIVISORTABLE		
+	DCD 0x00100000
+	DCD 0x00400000
+	DCD 0x00100000
+	DCD 0x00400000
 	
 	END
