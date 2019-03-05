@@ -36,10 +36,8 @@ IO1CLR	EQU	0xE002801C							;Clear Bits In Register (Turn on LEDS)
 mainloop
 	;bl flash
 	ldr r0, =0
-	bl press								;Poll to see if button has been pressed
-	;ldr r1, =DIVISORTABLE							;Comparison value for Increase Current Number
-	;ldr r0, [r1, r6]
-	;add r6, r6, #4
+	b pressCheck		;Poll to see if button has been pressed
+endPressCheck
 	cmp r0, #0								;if(press() != notPressed)
 	beq endSwitch								
 	cmp r0, #0x00200000							;Comparison value for Decrease Current Number
@@ -53,6 +51,12 @@ endSwitch
 ;Recuired as we need to branch and link
 ;Can get rid of this by calculating offset with the pc
 ;
+pressCheck
+	bl press
+	cmp r7, #1
+	beq endSwitch
+	b endPressCheck
+
 numberChange
 	bl numberChangeSub
 	b endSwitch
@@ -121,12 +125,13 @@ updateCurrentOp
 	beq addition
 	;subtraction
 	ldr r10, ='-'						;operator = -
-	mvn r9, r12						;last number = -currentNumber
-	add r9, r9, #1
+	mov r9, r12	
 	b endOpChange
 addition
 	ldr r10, ='+'						;else if(operator == '+')
-	mov r9, r12						;last number = currentNumber
+	mvn r9, r12						;last number = -currentNumber
+	add r9, r9, #1
+						;last number = currentNumber
 endOpChange
 	mov r12, #0						;currentNumber = 0
 endOpChange2PointO
@@ -146,8 +151,13 @@ press
 	mvn r0, r0									;Invert all bits so we can use button bits
 	and r0, r0, r1	;Mask out other bits we don't need
 	cmp r0, #0x00400000
-	bge longPress
+	bge branchToLongPress
+endLongPressBranch
 	ldmfd sp!, {pc}
+	
+branchToLongPress
+	bl longPress
+	b endLongPressBranch
 	
 ;long press subroutine
 ;polls the I/O pin register to see if a 
@@ -161,40 +171,42 @@ dloop3
 	beq enddloop3
 	cmp r0, #0x00400000								
 	blt enddloop3	;while(delay > 0 && button=pressed){
-	bl flash
+	;bl flash
 	ldr r0, =IO1PIN												
 	ldr r0, [r0]								;Poll Pin Register
 	ldr r1, =0x00f00000							;Mask for Button bits
 	and r0, r0, r1								;Mask out Button bits
 	mvn r0, r0								;Invert all bits so we can use button bits
 	and r0, r0, r1								;Mask out other bits we don't need
+updateButton
+	cmp r0, #0
+	beq endUpdateButton
+	mov r7, r0
+endUpdateButton
 	
 	add r5,r5,#1								; 		delay--
 	b dloop3									;
 enddloop3
-	ldr	r5,=5000000								;Value for delay
-dloop15
-	cmp r5, #0								
-	ble	enddloop15								;while(delay > 0){
-	subs r5,r5,#1								; 		delay--
-	b dloop15									;}
-enddloop15
+	
 	ldr r6, =500000
 	cmp r5, r6
 	blt endLongPress
-	cmp r0, #0x00800000
+	cmp r7, #0x00800000
 	beq clearAll
 	bl clearLastSub
+endClear
 	mov r7, #1
 	b theActualEnd
 endLongPress
 	mov r7, #0
 theActualEnd
+	mov r1, r11
+	bl updateDisplay
 	ldmfd sp!, {r0,r6,pc}
 	
 clearAll
 	bl clearAllSub
-	b endLongPress
+	b endClear
 	
 clearAllSub
 	stmfd sp!, {lr}
@@ -214,6 +226,7 @@ numberLast
 	mov r10, #0								
 	mov r9, #0 
 	mov r8, #0
+	mov r12, #0
 	ldmfd sp!, {pc}
 	
 ;clearDisplay subroutine
@@ -304,14 +317,5 @@ endpush
 endreverse
 	mov r0, r4
 	ldmfd SP!, {pc, r3-r8}	
-	
-	
-	AREA	Table, DATA, READWRITE
-			
-DIVISORTABLE		
-	DCD 0x00100000
-	DCD 0x00400000
-	DCD 0x00100000
-	DCD 0x00400000
 	
 	END
