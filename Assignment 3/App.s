@@ -222,7 +222,7 @@ clearLastSub
 	beq numberLast
 	add r11, r11, r9							;update sum
 numberLast
-	mov r10, #0								
+	;mov r10, #0								
 	mov r9, #0 
 	mov r8, #0
 	mov r12, #0

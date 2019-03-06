@@ -32,11 +32,11 @@ ARM Macro Assembler    Page 1
                                                             ster (Turn on LEDS)
                                                             
    18 00000000         
-   19 00000000 E59F1278        ldr              r1,=IO1DIR
+   19 00000000 E59F1274        ldr              r1,=IO1DIR
    20 00000004 E3A0280F        ldr              r2,=0x000f0000 ;Select P1.19--P
                                                             1.16
    21 00000008 E5812000        str              r2,[r1]     ;Make them outputs
-   22 0000000C E59F1270        ldr              r1,=IO1SET
+   22 0000000C E59F126C        ldr              r1,=IO1SET
    23 00000010 E5812000        str              r2,[r1]     ;Turn the LEDs off 
                                                             (Set bits)
    24 00000014 E3A0C000        mov              r12, #0     ;R12 - number we ar
@@ -138,7 +138,7 @@ ARM Macro Assembler    Page 3
    90 00000090 E28CC001        add              r12, r12, #1 ;currentNumber++
    91 00000094         endNumberChange
    92 00000094 E1A0100C        mov              r1, r12
-   93 00000098 EB000055        bl               updateDisplay
+   93 00000098 EB000054        bl               updateDisplay
    94 0000009C E8BD8000        ldmfd            sp!, { pc}
    95 000000A0         
    96 000000A0         
@@ -199,7 +199,7 @@ ARM Macro Assembler    Page 3
 ARM Macro Assembler    Page 4 
 
 
-  137 000000F8 EB00003D        bl               updateDisplay
+  137 000000F8 EB00003C        bl               updateDisplay
   138 000000FC E8BD8000        ldmfd            sp!, { pc}
   139 00000100         
   140 00000100         ;press subroutine
@@ -207,7 +207,7 @@ ARM Macro Assembler    Page 4
   142 00000100         ;button has been pressed
   143 00000100         press
   144 00000100 E92D4000        stmfd            sp!, {lr}
-  145 00000104 E59F017C        ldr              r0, =IO1PIN
+  145 00000104 E59F0178        ldr              r0, =IO1PIN
   146 00000108 E5900000        ldr              r0, [r0]    ;Poll Pin Register
   147 0000010C E3A0160F        ldr              r1, =0x00f00000 ;Mask for Butto
                                                             n bits
@@ -236,7 +236,7 @@ ARM Macro Assembler    Page 4
   164 00000130         longPress
   165 00000130 E92D4041        stmfd            sp!, {r0,r6,lr}
   166 00000134 E3A05000        mov              r5,#0       ;pressDuration
-  167 00000138 E59F614C        ldr              r6, =50000000 ;maxLongPress
+  167 00000138 E59F6148        ldr              r6, =50000000 ;maxLongPress
   168 0000013C E1A07000        mov              r7, r0      ;tempButton = butto
                                                             nPressed
   169 00000140         dloop3
@@ -248,7 +248,7 @@ ARM Macro Assembler    Page 4
                                                             Pressed == '-')    
                                                               
   173 0000014C BA00000A        blt              enddloop3
-  174 00000150 E59F0130        ldr              r0, =IO1PIN
+  174 00000150 E59F012C        ldr              r0, =IO1PIN
   175 00000154 E5900000        ldr              r0, [r0]    ;Poll Pin Register
   176 00000158 E3A0160F        ldr              r1, =0x00f00000 ;Mask for Butto
                                                             n bits
@@ -276,7 +276,7 @@ ARM Macro Assembler    Page 5
   187 00000178 EAFFFFF0        b                dloop3      ;
   188 0000017C         enddloop3
   189 0000017C         
-  190 0000017C E59F610C        ldr              r6, =500000 ;longPress comparis
+  190 0000017C E59F6108        ldr              r6, =500000 ;longPress comparis
                                                             on value
   191 00000180 E1550006        cmp              r5, r6      ;if(pressDuration >
                                                             = comparisionValue
@@ -295,7 +295,7 @@ ARM Macro Assembler    Page 5
                                                             t clear
   201 000001A0         theActualEnd
   202 000001A0 E1A0100B        mov              r1, r11
-  203 000001A4 EB000012        bl               updateDisplay
+  203 000001A4 EB000011        bl               updateDisplay
   204 000001A8 E8BD8041        ldmfd            sp!, {r0,r6,pc}
   205 000001AC         
   206 000001AC         clearAll
@@ -320,74 +320,74 @@ ARM Macro Assembler    Page 5
   222 000001D8 0A000000        beq              numberLast
   223 000001DC E08BB009        add              r11, r11, r9 ;update sum
   224 000001E0         numberLast
-  225 000001E0 E3A0A000        mov              r10, #0
-  226 000001E4 E3A09000        mov              r9, #0
-  227 000001E8 E3A08000        mov              r8, #0
+  225 000001E0         ;mov r10, #0        
+  226 000001E0 E3A09000        mov              r9, #0
+  227 000001E4 E3A08000        mov              r8, #0
 
 
 
 ARM Macro Assembler    Page 6 
 
 
-  228 000001EC E3A0C000        mov              r12, #0
-  229 000001F0 E8BD8000        ldmfd            sp!, {pc}
-  230 000001F4         
-  231 000001F4         ;updateDisplay subroutine
-  232 000001F4         ;Updates the value displayed on the LEDS
-  233 000001F4         updateDisplay
-  234 000001F4 E92D40FF        stmfd            sp!, {r0-r7, lr}
-  235 000001F8 E1A00801        mov              r0, r1, lsl #16 ;Shift currentN
+  228 000001E8 E3A0C000        mov              r12, #0
+  229 000001EC E8BD8000        ldmfd            sp!, {pc}
+  230 000001F0         
+  231 000001F0         ;updateDisplay subroutine
+  232 000001F0         ;Updates the value displayed on the LEDS
+  233 000001F0         updateDisplay
+  234 000001F0 E92D40FF        stmfd            sp!, {r0-r7, lr}
+  235 000001F4 E1A00801        mov              r0, r1, lsl #16 ;Shift currentN
                                                             umber to the correc
                                                             t position to mask
-  236 000001FC EB00000F        bl               reverseNumber
-  237 00000200 E59F107C        ldr              r1,=IO1SET
-  238 00000204 E3A0280F        mov              r2, #0x000f0000
-  239 00000208 E5812000        str              r2,[r1]     ;Turn the LEDs off
-  240 0000020C         
-  241 0000020C E59F5080        ldr              r5,=50000   ;Value for delay
-  242 00000210         dloop
-  243 00000210 E3550000        cmp              r5, #0
-  244 00000214 DA000001        ble              enddloop    ;while(delay > 0){
-  245 00000218 E2555001        subs             r5,r5,#1    ;   delay--
-  246 0000021C EAFFFFFB        b                dloop       ;}
-  247 00000220         enddloop
-  248 00000220 E59F1070        ldr              r1,=IO1CLR
-  249 00000224 E5810000        str              r0,[r1]     ;Turn on correct LE
+  236 000001F8 EB00000F        bl               reverseNumber
+  237 000001FC E59F107C        ldr              r1,=IO1SET
+  238 00000200 E3A0280F        mov              r2, #0x000f0000
+  239 00000204 E5812000        str              r2,[r1]     ;Turn the LEDs off
+  240 00000208         
+  241 00000208 E59F5080        ldr              r5,=50000   ;Value for delay
+  242 0000020C         dloop
+  243 0000020C E3550000        cmp              r5, #0
+  244 00000210 DA000001        ble              enddloop    ;while(delay > 0){
+  245 00000214 E2555001        subs             r5,r5,#1    ;   delay--
+  246 00000218 EAFFFFFB        b                dloop       ;}
+  247 0000021C         enddloop
+  248 0000021C E59F1070        ldr              r1,=IO1CLR
+  249 00000220 E5810000        str              r0,[r1]     ;Turn on correct LE
                                                             D's
-  250 00000228         
-  251 00000228 E59F506C        ldr              r5,=5000000 ;Value for delay
-  252 0000022C         dloop1
-  253 0000022C E3550000        cmp              r5, #0
-  254 00000230 DA000001        ble              enddloop1   ;while(delay > 0){
-  255 00000234 E2555001        subs             r5,r5,#1    ;   delay--
-  256 00000238 EAFFFFFB        b                dloop1      ;}
-  257 0000023C         enddloop1
-  258 0000023C E8BD80FF        ldmfd            sp!, {r0-r7, pc}
-  259 00000240         
-  260 00000240         ;Reverse Number Subroutine
-  261 00000240         ;Reverses a 4 bit binary number placing it
-  262 00000240         ;in the correct position to turn on LEDS
-  263 00000240         ;
-  264 00000240         ;R0 number being converted
-  265 00000240         ;
-  266 00000240         reverseNumber
-  267 00000240 E92D41F8        stmfd            SP!, {lr, r3-r8} ; store regist
+  250 00000224         
+  251 00000224 E59F506C        ldr              r5,=5000000 ;Value for delay
+  252 00000228         dloop1
+  253 00000228 E3550000        cmp              r5, #0
+  254 0000022C DA000001        ble              enddloop1   ;while(delay > 0){
+  255 00000230 E2555001        subs             r5,r5,#1    ;   delay--
+  256 00000234 EAFFFFFB        b                dloop1      ;}
+  257 00000238         enddloop1
+  258 00000238 E8BD80FF        ldmfd            sp!, {r0-r7, pc}
+  259 0000023C         
+  260 0000023C         ;Reverse Number Subroutine
+  261 0000023C         ;Reverses a 4 bit binary number placing it
+  262 0000023C         ;in the correct position to turn on LEDS
+  263 0000023C         ;
+  264 0000023C         ;R0 number being converted
+  265 0000023C         ;
+  266 0000023C         reverseNumber
+  267 0000023C E92D41F8        stmfd            SP!, {lr, r3-r8} ; store regist
                                                             ers to stack
-  268 00000244 E3A03000        ldr              r3, =0      ; count = 0
-  269 00000248 E3A04000        ldr              r4, =0      ; reversed number 
-  270 0000024C         reverse
-  271 0000024C E3530024        cmp              r3, #36     ; while(count < num
+  268 00000240 E3A03000        ldr              r3, =0      ; count = 0
+  269 00000244 E3A04000        ldr              r4, =0      ; reversed number 
+  270 00000248         reverse
+  271 00000248 E3530024        cmp              r3, #36     ; while(count < num
                                                             ber of digits to re
                                                             verse){
-  272 00000250 AA000008        bge              endreverse
-  273 00000254 E2005001        and              r5, r0, #1  ; mask out least si
+  272 0000024C AA000008        bge              endreverse
+  273 00000250 E2005001        and              r5, r0, #1  ; mask out least si
                                                             gnificant bit
-  274 00000258 E1A000A0        mov              r0, r0, lsr #1 ; shift original
+  274 00000254 E1A000A0        mov              r0, r0, lsr #1 ; shift original
                                                              number right 1 bit
                                                             
-  275 0000025C E1A04084        mov              r4, r4, lsl #1 ; shift reversed
+  275 00000258 E1A04084        mov              r4, r4, lsl #1 ; shift reversed
                                                              number left 1 bit
-  276 00000260 E3550001        cmp              r5, #1      ; if(masked bit == 
+  276 0000025C E3550001        cmp              r5, #1      ; if(masked bit == 
 
 
 
@@ -395,18 +395,18 @@ ARM Macro Assembler    Page 7
 
 
                                                             1){
-  277 00000264 0A000000        beq              push1
-  278 00000268 EA000000        b                endpush
-  279 0000026C         push1
-  280 0000026C E3844001        orr              r4, r4, #1  ; mask in a 1
-  281 00000270         endpush
-  282 00000270 E2833001        add              r3, r3, #1  ; count++
-  283 00000274 EAFFFFF4        b                reverse
-  284 00000278         endreverse
-  285 00000278 E1A00004        mov              r0, r4
-  286 0000027C E8BD81F8        ldmfd            SP!, {pc, r3-r8}
-  287 00000280         
-  288 00000280                 END
+  277 00000260 0A000000        beq              push1
+  278 00000264 EA000000        b                endpush
+  279 00000268         push1
+  280 00000268 E3844001        orr              r4, r4, #1  ; mask in a 1
+  281 0000026C         endpush
+  282 0000026C E2833001        add              r3, r3, #1  ; count++
+  283 00000270 EAFFFFF4        b                reverse
+  284 00000274         endreverse
+  285 00000274 E1A00004        mov              r0, r4
+  286 00000278 E8BD81F8        ldmfd            SP!, {pc, r3-r8}
+  287 0000027C         
+  288 0000027C                 END
               E0028018 
               E0028014 
               E0028010 
@@ -417,8 +417,8 @@ ARM Macro Assembler    Page 7
               004C4B40 
 Command Line: --debug --xref --diag_suppress=9931 --apcs=interwork --depend=.\a
 pp.d -o.\app.o -IC:\Keil_v5\ARM\RV31\INC -IC:\Keil_v5\ARM\CMSIS\Include -IC:\Ke
-il_v5\ARM\INC\Philips --predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 
-1" --predefine="__UVISION_VERSION SETA 526" --list=.\listings\app.lst App.s
+il_v5\ARM\Inc\Philips --predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 
+1" --predefine="__UVISION_VERSION SETA 516" --list=.\listings\app.lst App.s
 
 
 
@@ -481,7 +481,7 @@ Symbol: clearLastSub
    Uses
       At line 195 in file App.s
 Comment: clearLastSub used once
-dloop 00000210
+dloop 0000020C
 
 Symbol: dloop
 
@@ -495,7 +495,7 @@ Relocatable symbols
    Uses
       At line 246 in file App.s
 Comment: dloop used once
-dloop1 0000022C
+dloop1 00000228
 
 Symbol: dloop1
    Definitions
@@ -600,7 +600,7 @@ Symbol: endUpdateButton
    Uses
       At line 182 in file App.s
 Comment: endUpdateButton used once
-enddloop 00000220
+enddloop 0000021C
 
 Symbol: enddloop
    Definitions
@@ -608,7 +608,7 @@ Symbol: enddloop
    Uses
       At line 244 in file App.s
 Comment: enddloop used once
-enddloop1 0000023C
+enddloop1 00000238
 
 Symbol: enddloop1
    Definitions
@@ -631,7 +631,7 @@ Symbol: enddloop3
       At line 171 in file App.s
       At line 173 in file App.s
 
-endpush 00000270
+endpush 0000026C
 
 Symbol: endpush
    Definitions
@@ -639,7 +639,7 @@ Symbol: endpush
    Uses
       At line 278 in file App.s
 Comment: endpush used once
-endreverse 00000278
+endreverse 00000274
 
 Symbol: endreverse
    Definitions
@@ -741,7 +741,7 @@ Symbol: pressCheck
    Uses
       At line 36 in file App.s
 Comment: pressCheck used once
-push1 0000026C
+push1 00000268
 
 Symbol: push1
 
@@ -755,7 +755,7 @@ Relocatable symbols
    Uses
       At line 277 in file App.s
 Comment: push1 used once
-reverse 0000024C
+reverse 00000248
 
 Symbol: reverse
    Definitions
@@ -763,7 +763,7 @@ Symbol: reverse
    Uses
       At line 283 in file App.s
 Comment: reverse used once
-reverseNumber 00000240
+reverseNumber 0000023C
 
 Symbol: reverseNumber
    Definitions
@@ -818,7 +818,7 @@ Relocatable symbols
       At line 112 in file App.s
       At line 117 in file App.s
 
-updateDisplay 000001F4
+updateDisplay 000001F0
 
 Symbol: updateDisplay
    Definitions
