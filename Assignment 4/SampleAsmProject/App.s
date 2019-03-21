@@ -30,7 +30,7 @@ IRQslot_en	equ	5		; UM, Table 58
 IO0DIR	EQU	0xE0028008
 IO0SET	EQU	0XE0028004
 IO0CLR	EQU	0XE002800C
-IOPIN 	EQU 0XE0028000
+IO0PIN 	EQU 0XE0028000
 	
 	
 	AREA	InitialisationAndMain, CODE, READONLY
@@ -43,12 +43,15 @@ start
 ; initialisation code
 ;initialising the LED
 	ldr	r1,=IO0DIR
-	ldr	r6,=0x00130000					; select P0.21--P0.18 --P0.17
+	ldr	r6,=0x00260000					; select P0.21--P0.18 --P0.17
 	str	r6,[r1]							; make them outputs
-	ldr	r1,=IO0CLR
-	str	r6,[r1]							; set them to turn the LEDs ON
-	ldr	r2,=IO0SET
+	ldr	r1,=IO0SET
+	str	r6,[r1]							; CLR them to turn the LEDs ON
 	
+	ldr	r2,=IO0CLR
+	ldr r3, =0x00020000
+	str r3, [r2]
+	ldr r12, =1 ; lights
 
 ; Initialise the VIC
 	ldr	r0,=VIC			; looking at you, VIC!
@@ -85,7 +88,55 @@ start
 
 ;from here, initialisation is finished, so it should be the main body of the main program
 
-wloop	b	wloop  		; branch always
+wloop	
+	LDR R2, = LIGHTS
+	LDR R2, [R2]
+	CMP R2, #200
+	BNE wloop
+	LDR R3,=IO0PIN
+	LDR R3, [R3]
+	MVN R3, R3
+	AND R3, R3, #0X00260000
+	CMP R3, #0x00020000
+	BEQ redToGreen
+	CMP R3, #0x00040000
+	BEQ blueToRed
+	CMP R3, #0X00200000
+	BEQ greenToBlue
+	B wend
+	
+redToGreen
+	LDR R3, =IO0SET
+	LDR R4, =0X00260000
+	STR R4, [R3] ; turn all leds off
+	LDR R3, =IO0CLR
+	LDR R4,=0X00200000
+	STR R4, [R3] ; turn on green light
+	B wend
+	
+blueToRed
+	LDR R3, =IO0SET
+	LDR R4, =0X00260000
+	STR R4, [R3] ; turn all leds off
+	LDR R3, =IO0CLR
+	LDR R4,=0X00020000
+	STR R4, [R3] ; turn on red light
+	B wend
+	
+greenToBlue
+	LDR R3, =IO0SET
+	LDR R4, =0X00260000
+	STR R4, [R3] ; turn all leds off
+	LDR R3, =IO0CLR
+	LDR R4,=0X00040000
+	STR R4, [R3] ; turn on blue light
+	B wend
+	
+wend	
+	LDR R3, =0 
+	LDR R2, =LIGHTS
+	STR R3, [R2] ; reset mem address lights
+	b	wloop  		; branch always
 ;main program execution will never drop below the statement above.
 
 	AREA	InterruptStuff, CODE, READONLY
@@ -96,8 +147,10 @@ irqhan	sub	lr,lr,#4
 
 ;here you'd put the unique part of your interrupt handler
 ;all the other stuff is "housekeeping" to save registers and acknowledge interrupts
-	LDR R0, =1; set lights value to 1
+	
 	LDR R1, =LIGHTS ; load address of lights
+	LDR R0, [R1]
+	ADD R0, R0, #1
 	STR R0, [R1];store 1 in lights address
 
 ;this is where we stop the timer from making the interrupt request to the VIC
@@ -117,5 +170,5 @@ irqhan	sub	lr,lr,#4
 	
 	
 	AREA lights,READWRITE
-LIGHTS  space 1
+LIGHTS  DCD 0
 		END
