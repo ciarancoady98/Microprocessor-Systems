@@ -87,13 +87,13 @@ start
 	str	r1,[r0,#TCR]
 
 ;from here, initialisation is finished, so it should be the main body of the main program
-	;LDR R1, =200	; current limit
+	LDR R1, =200	; current limit
 wloop	
 	LDR R2, =LIGHTS
 	LDR R2, [R2]
-	CMP R2, #200
+	CMP R2, R1
 	BNE wloop
-	;ADD R1, R1, #200 ; increase the limit
+	ADD R1, R1, #200 ; increase the limit
 	LDR R3,=IO0PIN
 	LDR R3, [R3]
 	MVN R3, R3
@@ -133,7 +133,8 @@ greenToBlue
 	STR R4, [R3] ; turn on blue light
 	B wend
 	
-wend	
+wend
+	LDR R1, =200
 	;LDR R3, =0 
 	;LDR R2, =LIGHTS
 	;STR R3, [R2] ; reset mem address lights
@@ -152,12 +153,13 @@ irqhan	sub	lr,lr,#4
 	LDR R1, =LIGHTS ; load address of lights
 	LDR R0, [R1]
 	CMP R0, #200
-	BLT increment
-	;reset the counter
-	LDR R0, #0
-	B endLedMod
-increment
+	BEQ reset
+	;increment
 	ADD R0, R0, #1
+	B endLedMod
+reset
+	;reset the counter
+	LDR R0, =1
 endLedMod
 	STR R0, [R1];store 1 in lights address
 
