@@ -173,17 +173,18 @@ initialSwitch
 	ldr r1, =0
 	str r1, [r0]
 	;update cpsr
+	LDR R2, =INITIALISATIONCOUNT
+	LDR R3, [R2]
+	ADD R3, R3, #1
+	STR R3, [R2]
 	mrs r0, cpsr
 	ldr r1, =0xFFFFFFE0
 	and r0, r0, r1
 	ldr r1, =0x00000010
 	orr r0, r0, r1
 	msr cpsr_f, r0
-	LDR R2, =INITIALISATIONCOUNT
-	LDR R3, [R2]
-	ADD R3, R3, #1
-	STR R3, [R2]
 	B startBlinky0
+	
 	
 switchTo1
 	ldr r2, =THREAD0REG
@@ -202,6 +203,7 @@ restoreContext
 	sub r2, r2, #4
 	mrs r0, cpsr
 	mov r2, r0
+	
 	
 switchTo0
 	ldr r2, =THREAD1REG
