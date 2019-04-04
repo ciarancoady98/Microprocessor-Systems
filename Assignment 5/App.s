@@ -30,6 +30,11 @@ IRQslot_en	equ	5		; UM, Table 58
 IO1DIR	EQU	0xE0028018
 IO1SET	EQU	0xE0028014
 IO1CLR	EQU	0xE002801C
+		
+IO0DIR	EQU	0xE0028008
+IO0SET	EQU	0XE0028004
+IO0CLR	EQU	0XE002800C
+IO0PIN 	EQU 0XE0028000
 
 	AREA	InitialisationAndMain, CODE, READONLY
 	IMPORT	main
@@ -75,11 +80,12 @@ start
 	
 ;stack stuff 
 
-	
-	;thread 1
-	AREA	blinky1, CODE, READONLY
-	
+initLoop B initLoop
 
+	;thread 0
+	AREA	blinky0, CODE, READONLY
+	
+startBlinky0
 	ldr	r1,=IO1DIR
 	ldr	r2,=0x000f0000	;select P1.19--P1.16
 	str	r2,[r1]		;make them outputs
@@ -107,23 +113,27 @@ dloop2	subs	r4,r4,#1
 	b floop
 
 ;end blinky1
-;thread 2
-	AREA	blinky2, CODE, READONLY
-	
-	
 
-	ldr	r1,=IO1DIR
-	ldr	r2,=0x000f0000	;select P1.19--P1.16
+
+;thread 1
+	AREA	blinky1, CODE, READONLY
+	
+startBlinky1	
+
+	ldr	r1,=IO0DIR
+	ldr	r2,=0X00260000	;select P1.19--P1.16
 	str	r2,[r1]		;make them outputs
 	
 	
-	ldr	r1,=IO1SET
+	ldr	r1,=IO0SET
 	str	r2,[r1]		;set them to turn the LEDs off
-	ldr	r2,=IO1CLR
+	ldr	r2,=IO0CLR
+	
+	
 ; r1 points to the SET register
 ; r2 points to the CLEAR register
 floopb2
-	ldr	r0,=0x00080000	;select P1.19--P1.16
+	ldr	r0,=0X00200000	;select P1.19--P1.16
 	str r0, [r2]
 ;delay for about a half second
 	ldr	r4,=4000000
@@ -149,8 +159,69 @@ irqhan	sub	lr,lr,#4
 
 ;here you'd put the unique part of your interrupt handler
 ;all the other stuff is "housekeeping" to save registers and acknowledge interrupts
+;switching threads
+	ldr r0, =CURRENTTHREAD
+	ldr r1, [r0]
+	cmp r1, #-1
+	beq initialSwitch
+	cmp r1, #0
+	beq switchTo1
+	cmp r1, #1
+	beq switchTo0
 	
-
+initialSwitch
+	ldr r1, =0
+	str r1, [r0]
+	;update cpsr
+	mrs r0, cpsr
+	ldr r1, =0xFFFFFFE0
+	and r0, r0, r1
+	ldr r1, =0x00000010
+	orr r0, r0, r1
+	msr cpsr_f, r0
+	LDR R2, =INITIALISATIONCOUNT
+	LDR R3, [R2]
+	ADD R3, R3, #1
+	STR R3, [R2]
+	B startBlinky0
+	
+switchTo1
+	ldr r2, =THREAD0REG
+	stmfa r2, {r0-r15}
+	LDR R2, =INITIALISATIONCOUNT
+	LDR R3, [R2]
+	CMP R3, #2
+	BGE restoreContext
+	ADD R3, R3, #1
+	STR R3, [R2]
+	B startBlinky1
+	
+restoreContext
+	ldr r2, =THREAD1REG
+	ldmfa r2, {r0-r15}
+	sub r2, r2, #4
+	mrs r0, cpsr
+	mov r2, r0
+	
+switchTo0
+	ldr r2, =THREAD1REG
+	stmfa r2, {r0-r15}
+	LDR R2, =INITIALISATIONCOUNT
+	LDR R3, [R2]
+	CMP R3, #2
+	BGE restoreContext1
+	ADD R3, R3, #1
+	STR R3, [R2]
+	B startBlinky0
+	
+restoreContext1
+	ldr r2, =THREAD0REG
+	sub r2, r2, #4*13
+	ldr r2, [r2]
+	msr cpsr_f, r2
+	ldr r2, =THREAD0REG
+	ldmfa r2, {r0-r15}
+	
 
 ;this is where we stop the timer from making the interrupt request to the VIC
 ;i.e. we 'acknowledge' the interrupt
@@ -165,5 +236,15 @@ irqhan	sub	lr,lr,#4
 
 	ldmfd	sp!,{r0-r1,pc}^	; return from interrupt, restoring pc from lr
 				; and also restoring the CPSR
-
+				
+	AREA processStorage, READWRITE
+THREAD0STACK SPACE 200 
+THREAD0REG SPACE 16
+	
+THREAD1STACK SPACE 200
+THREAD1REG SPACE 16
+	
+CURRENTTHREAD DCD -1
+	
+INITIALISATIONCOUNT DCD 0 
 	END
