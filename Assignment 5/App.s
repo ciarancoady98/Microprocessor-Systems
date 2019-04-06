@@ -76,6 +76,10 @@ start
 	mov	r1,#TimerCommandRun
 	str	r1,[r0,#TCR]
 	
+	;Intialise spsr for debugging
+	;mrs r1, cpsr
+	;msr spsr_cxsf, r1
+	
 	;Branch to interrupt handler for debugging purposes
 	;b irqhan
 initLoop B initLoop
@@ -176,11 +180,17 @@ initialSwitch
 	;load the initial values for thread 0
 	ldr sp, =THREAD0STACK
 	ldr lr, =startBlinky0
-	stmia sp, {r0-r12, lr}
+	stmia sp!, {r0-r12, lr}
+	;Store the spsr
+	mrs r1, spsr
+	str r1, [sp], #4
 	;load the initial values for thread 1
 	ldr sp, =THREAD1STACK
 	ldr lr, =startBlinky1
 	stmia sp!, {r0-r12, lr}
+	;Store the spsr
+	mrs r1, spsr
+	str r1, [sp], #4
 	;The stack pointer is now updated and ready
 	;to restore thread 1
 	b restoreContext
@@ -194,10 +204,13 @@ switchToThread1
 	ldmfd sp!, {r0-r12, lr}
 	;Save the context of the interrrupted thread to its stack
 	ldr sp, =THREAD0STACK
-	stmia sp, {r0-r12, lr}
+	stmia sp!, {r0-r12, lr}
+	;Store the spsr
+	mrs r1, spsr
+	str r1, [sp], #4
 	;Setup the stack pointer for restore of thread 1
 	ldr sp, =THREAD1STACK
-	add sp, sp, #14*4
+	add sp, sp, #15*4
 	b restoreContext
 	
 switchToThread0
@@ -210,9 +223,12 @@ switchToThread0
 	;Save the context of the interrrupted thread to its stack
 	ldr sp, =THREAD1STACK
 	stmia sp, {r0-r12, lr}
+	;Store the spsr
+	mrs r1, spsr
+	str r1, [sp], #4
 	;Setup the stack pointer for restore of thread 0
 	ldr sp, =THREAD0STACK
-	add sp, sp, #14*4
+	add sp, sp, #15*4
 	b restoreContext
 
 restoreContext
@@ -227,17 +243,17 @@ restoreContext
 	ldr	r0,=VIC
 	mov	r1,#0
 	str	r1,[r0,#VectAddr]	; reset VIC
-
-	;mrs r0, spsr
-	;msr cpsr_cxsf, r0
 	
+	;Restore the spsr from memory to the cpsr
+	ldr r0, [sp, #-4]!
+	msr spsr_cxsf, r0
 	;Resume the selected thread and return to the user mode
 	ldmdb	sp,{r0-r12,pc}^
 	
 	
 	AREA processStorage, READWRITE
 		
-THREAD0STACK SPACE 56 	
-THREAD1STACK SPACE 56
+THREAD0STACK SPACE 60	
+THREAD1STACK SPACE 60
 CURRENTTHREAD DCD -1
 	END

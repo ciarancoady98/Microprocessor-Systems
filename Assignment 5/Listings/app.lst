@@ -154,217 +154,233 @@ ARM Macro Assembler    Page 3
    76 00000048 E3A01001        mov              r1,#TimerCommandRun
    77 0000004C E5801004        str              r1,[r0,#TCR]
    78 00000050         
-   79 00000050         ;Branch to interrupt handler for debugging purposes
-   80 00000050         ;b irqhan
-   81 00000050 EAFFFFFE 
+   79 00000050         ;Intialise spsr for debugging
+   80 00000050         ;mrs r1, cpsr
+   81 00000050         ;msr spsr_cxsf, r1
+   82 00000050         
+   83 00000050         ;Branch to interrupt handler for debugging purposes
+   84 00000050         ;b irqhan
+   85 00000050 EAFFFFFE 
                        initLoop
                                B                initLoop
-   82 00000054         
-   83 00000054         ;thread 0
-   84 00000054 FFFFF000 
+   86 00000054         
+   87 00000054         ;thread 0
+   88 00000054 FFFFF000 
               00000000 
               E0004000 
               00011FFF         AREA             blinky0, CODE, READONLY
-   85 00000000         
-   86 00000000         startBlinky0
-   87 00000000 E59F1038        ldr              r1,=IO1DIR
-   88 00000004 E3A0280F        ldr              r2,=0x000f0000 ;select P1.19--P
+   89 00000000         
+   90 00000000         startBlinky0
+   91 00000000 E59F1038        ldr              r1,=IO1DIR
+   92 00000004 E3A0280F        ldr              r2,=0x000f0000 ;select P1.19--P
                                                             1.16
-   89 00000008 E5812000        str              r2,[r1]     ;make them outputs
-   90 0000000C         
-   91 0000000C         
-   92 0000000C E59F1030        ldr              r1,=IO1SET
-   93 00000010 E5812000        str              r2,[r1]     ;set them to turn t
+   93 00000008 E5812000        str              r2,[r1]     ;make them outputs
+   94 0000000C         
+   95 0000000C         
+   96 0000000C E59F1030        ldr              r1,=IO1SET
+   97 00000010 E5812000        str              r2,[r1]     ;set them to turn t
                                                             he LEDs off
-   94 00000014 E59F202C        ldr              r2,=IO1CLR
-   95 00000018         ; r1 points to the SET register
-   96 00000018         ; r2 points to the CLEAR register
-   97 00000018         floop
-   98 00000018 E3A00801        ldr              r0,=0x00010000 ;select P1.19--P
+   98 00000014 E59F202C        ldr              r2,=IO1CLR
+   99 00000018         ; r1 points to the SET register
+  100 00000018         ; r2 points to the CLEAR register
+  101 00000018         floop
+  102 00000018 E3A00801        ldr              r0,=0x00010000 ;select P1.19--P
                                                             1.16
-   99 0000001C E5820000        str              r0, [r2]
-  100 00000020         ;delay for about a half second
-  101 00000020 E59F4024        ldr              r4,=4000000
-  102 00000024         ;ldr r4,=1
-  103 00000024 E2544001 
+  103 0000001C E5820000        str              r0, [r2]
+  104 00000020         ;delay for about a half second
+  105 00000020 E59F4024        ldr              r4,=4000000
+  106 00000024         ;ldr r4,=1
+  107 00000024 E2544001 
                        dloop   subs             r4,r4,#1
-  104 00000028 1AFFFFFD        bne              dloop
-  105 0000002C         
-  106 0000002C E5810000        str              r0, [r1]
-  107 00000030         ;delay for about a half second
-  108 00000030 E59F4014        ldr              r4,=4000000
+  108 00000028 1AFFFFFD        bne              dloop
 
 
 
 ARM Macro Assembler    Page 4 
 
 
-  109 00000034 E2544001 
+  109 0000002C         
+  110 0000002C E5810000        str              r0, [r1]
+  111 00000030         ;delay for about a half second
+  112 00000030 E59F4014        ldr              r4,=4000000
+  113 00000034 E2544001 
                        dloop2  subs             r4,r4,#1
-  110 00000038 1AFFFFFD        bne              dloop2
-  111 0000003C EAFFFFF5        b                floop
-  112 00000040         
-  113 00000040         ;end blinky1
-  114 00000040         
-  115 00000040         
-  116 00000040         ;thread 1
-  117 00000040 E0028018 
+  114 00000038 1AFFFFFD        bne              dloop2
+  115 0000003C EAFFFFF5        b                floop
+  116 00000040         
+  117 00000040         ;end blinky1
+  118 00000040         
+  119 00000040         
+  120 00000040         ;thread 1
+  121 00000040 E0028018 
               E0028014 
               E002801C 
               003D0900         AREA             blinky1, CODE, READONLY
-  118 00000000         
-  119 00000000         startBlinky1
-  120 00000000         
-  121 00000000 E59F1038        ldr              r1,=IO0DIR
-  122 00000004 E3A02826        ldr              r2,=0X00260000 ;select P1.19--P
+  122 00000000         
+  123 00000000         startBlinky1
+  124 00000000         
+  125 00000000 E59F1038        ldr              r1,=IO0DIR
+  126 00000004 E3A02826        ldr              r2,=0X00260000 ;select P1.19--P
                                                             1.16
-  123 00000008 E5812000        str              r2,[r1]     ;make them outputs
-  124 0000000C         
-  125 0000000C         
-  126 0000000C E59F1030        ldr              r1,=IO0SET
-  127 00000010 E5812000        str              r2,[r1]     ;set them to turn t
+  127 00000008 E5812000        str              r2,[r1]     ;make them outputs
+  128 0000000C         
+  129 0000000C         
+  130 0000000C E59F1030        ldr              r1,=IO0SET
+  131 00000010 E5812000        str              r2,[r1]     ;set them to turn t
                                                             he LEDs off
-  128 00000014 E59F202C        ldr              r2,=IO0CLR
-  129 00000018         
-  130 00000018         
-  131 00000018         ; r1 points to the SET register
-  132 00000018         ; r2 points to the CLEAR register
-  133 00000018         floopb2
-  134 00000018 E3A00602        ldr              r0,=0X00200000 ;select P1.19--P
+  132 00000014 E59F202C        ldr              r2,=IO0CLR
+  133 00000018         
+  134 00000018         
+  135 00000018         ; r1 points to the SET register
+  136 00000018         ; r2 points to the CLEAR register
+  137 00000018         floopb2
+  138 00000018 E3A00602        ldr              r0,=0X00200000 ;select P1.19--P
                                                             1.16
-  135 0000001C E5820000        str              r0, [r2]
-  136 00000020         ;delay for about a half second
-  137 00000020 E59F4024        ldr              r4,=4000000
-  138 00000024 E2544001 
+  139 0000001C E5820000        str              r0, [r2]
+  140 00000020         ;delay for about a half second
+  141 00000020 E59F4024        ldr              r4,=4000000
+  142 00000024 E2544001 
                        dloopb2 subs             r4,r4,#1
-  139 00000028 1AFFFFFD        bne              dloopb2
-  140 0000002C         
-  141 0000002C E5810000        str              r0, [r1]
-  142 00000030         ;delay for about a half second
-  143 00000030 E59F4014        ldr              r4,=4000000
-  144 00000034 E2544001 
+  143 00000028 1AFFFFFD        bne              dloopb2
+  144 0000002C         
+  145 0000002C E5810000        str              r0, [r1]
+  146 00000030         ;delay for about a half second
+  147 00000030 E59F4014        ldr              r4,=4000000
+  148 00000034 E2544001 
                        dloopb22
                                subs             r4,r4,#1
-  145 00000038 1AFFFFFD        bne              dloopb22
-  146 0000003C EAFFFFF5        b                floopb2
-  147 00000040         
-  148 00000040         ;end blinky 2
-  149 00000040         
-  150 00000040         ;interrupt stuff
-  151 00000040 E0028008 
+  149 00000038 1AFFFFFD        bne              dloopb22
+  150 0000003C EAFFFFF5        b                floopb2
+  151 00000040         
+  152 00000040         ;end blinky 2
+  153 00000040         
+  154 00000040         ;interrupt stuff
+  155 00000040 E0028008 
               E0028004 
               E002800C 
-              003D0900         AREA             InterruptStuff, CODE, READONLY
-  152 00000000         irqhan
-  153 00000000         ;Setup the return address as we want to re-excute the in
-                       terrupted instruction
 
 
 
 ARM Macro Assembler    Page 5 
 
 
-  154 00000000 E24EE004        sub              lr,lr,#4
-  155 00000004         ;Store the context of the thread we interrupted to the i
+              003D0900         AREA             InterruptStuff, CODE, READONLY
+  156 00000000         irqhan
+  157 00000000         ;Setup the return address as we want to re-excute the in
+                       terrupted instruction
+  158 00000000 E24EE004        sub              lr,lr,#4
+  159 00000004         ;Store the context of the thread we interrupted to the i
                        nterrupt stack
-  156 00000004 E92D5FFF        stmfd            sp!,{r0-r12,lr}
-  157 00000008         ;this is the body of the interrupt handler
-  158 00000008         ;switching threads
-  159 00000008 E59F00A4        ldr              r0, =CURRENTTHREAD
-  160 0000000C E5901000        ldr              r1, [r0]
-  161 00000010 E3710001        cmp              r1, #-1
-  162 00000014 0A000003        beq              initialSwitch
-  163 00000018 E3510000        cmp              r1, #0
-  164 0000001C 0A00000B        beq              switchToThread1
-  165 00000020 E3510001        cmp              r1, #1
-  166 00000024 0A000012        beq              switchToThread0
-  167 00000028         
-  168 00000028         initialSwitch
-  169 00000028         ;In here we setup the contexts and decide on which threa
+  160 00000004 E92D5FFF        stmfd            sp!,{r0-r12,lr}
+  161 00000008         ;this is the body of the interrupt handler
+  162 00000008         ;switching threads
+  163 00000008 E59F00CC        ldr              r0, =CURRENTTHREAD
+  164 0000000C E5901000        ldr              r1, [r0]
+  165 00000010 E3710001        cmp              r1, #-1
+  166 00000014 0A000003        beq              initialSwitch
+  167 00000018 E3510000        cmp              r1, #0
+  168 0000001C 0A00000F        beq              switchToThread1
+  169 00000020 E3510001        cmp              r1, #1
+  170 00000024 0A000018        beq              switchToThread0
+  171 00000028         
+  172 00000028         initialSwitch
+  173 00000028         ;In here we setup the contexts and decide on which threa
                        d to run
-  170 00000028         ;Initialise thread contexts 
-  171 00000028         ;mov r0, sp ; save the current stack pointer
-  172 00000028         ;Set thread 1 as the running thread
-  173 00000028 E59F0084        ldr              r0, =CURRENTTHREAD
-  174 0000002C E3A01001        ldr              r1, =1
-  175 00000030 E5801000        str              r1, [r0]
-  176 00000034         ;load the initial values for thread 0
-  177 00000034 E59FD07C        ldr              sp, =THREAD0STACK
-  178 00000038 E59FE080        ldr              lr, =startBlinky0
-  179 0000003C E88D5FFF        stmia            sp, {r0-r12, lr}
-  180 00000040         ;load the initial values for thread 1
-  181 00000040 E59FD074        ldr              sp, =THREAD1STACK
-  182 00000044 E59FE07C        ldr              lr, =startBlinky1
-  183 00000048 E8AD5FFF        stmia            sp!, {r0-r12, lr}
-  184 0000004C         ;The stack pointer is now updated and ready
-  185 0000004C         ;to restore thread 1
-  186 0000004C EA000011        b                restoreContext
-  187 00000050         
-  188 00000050         switchToThread1
-  189 00000050         ;Update current thread to thread 1
-  190 00000050 E59F005C        ldr              r0, =CURRENTTHREAD
-  191 00000054 E3A01001        ldr              r1, =1
-  192 00000058 E5801000        str              r1, [r0]
-  193 0000005C         ;Restore the context of the last thread from interrupt s
+  174 00000028         ;Initialise thread contexts 
+  175 00000028         ;mov r0, sp ; save the current stack pointer
+  176 00000028         ;Set thread 1 as the running thread
+  177 00000028 E59F00AC        ldr              r0, =CURRENTTHREAD
+  178 0000002C E3A01001        ldr              r1, =1
+  179 00000030 E5801000        str              r1, [r0]
+  180 00000034         ;load the initial values for thread 0
+  181 00000034 E59FD0A4        ldr              sp, =THREAD0STACK
+  182 00000038 E59FE0A8        ldr              lr, =startBlinky0
+  183 0000003C E8AD5FFF        stmia            sp!, {r0-r12, lr}
+  184 00000040         ;Store the spsr
+  185 00000040 E14F1000        mrs              r1, spsr
+  186 00000044 E48D1004        str              r1, [sp], #4
+  187 00000048         ;load the initial values for thread 1
+  188 00000048 E59FD094        ldr              sp, =THREAD1STACK
+  189 0000004C E59FE09C        ldr              lr, =startBlinky1
+  190 00000050 E8AD5FFF        stmia            sp!, {r0-r12, lr}
+  191 00000054         ;Store the spsr
+  192 00000054 E14F1000        mrs              r1, spsr
+  193 00000058 E48D1004        str              r1, [sp], #4
+  194 0000005C         ;The stack pointer is now updated and ready
+  195 0000005C         ;to restore thread 1
+  196 0000005C EA000015        b                restoreContext
+  197 00000060         
+  198 00000060         switchToThread1
+  199 00000060         ;Update current thread to thread 1
+  200 00000060 E59F0074        ldr              r0, =CURRENTTHREAD
+  201 00000064 E3A01001        ldr              r1, =1
+  202 00000068 E5801000        str              r1, [r0]
+  203 0000006C         ;Restore the context of the last thread from interrupt s
                        tack
-  194 0000005C E8BD5FFF        ldmfd            sp!, {r0-r12, lr}
-  195 00000060         ;Save the context of the interrrupted thread to its stac
+  204 0000006C E8BD5FFF        ldmfd            sp!, {r0-r12, lr}
+  205 00000070         ;Save the context of the interrrupted thread to its stac
                        k
-  196 00000060 E59FD050        ldr              sp, =THREAD0STACK
-  197 00000064 E88D5FFF        stmia            sp, {r0-r12, lr}
-  198 00000068         ;Setup the stack pointer for restore of thread 1
-  199 00000068 E59FD04C        ldr              sp, =THREAD1STACK
-  200 0000006C E28DD038        add              sp, sp, #14*4
-  201 00000070 EA000008        b                restoreContext
-  202 00000074         
-  203 00000074         switchToThread0
-  204 00000074         ;Update current thread to thread 0
-  205 00000074 E59F0038        ldr              r0, =CURRENTTHREAD
-  206 00000078 E3A01000        ldr              r1, =0
-  207 0000007C E5801000        str              r1, [r0]
-  208 00000080         ;Restore the context of the last thread from interrupt s
+  206 00000070 E59FD068        ldr              sp, =THREAD0STACK
+  207 00000074 E8AD5FFF        stmia            sp!, {r0-r12, lr}
+  208 00000078         ;Store the spsr
 
 
 
 ARM Macro Assembler    Page 6 
 
 
+  209 00000078 E14F1000        mrs              r1, spsr
+  210 0000007C E48D1004        str              r1, [sp], #4
+  211 00000080         ;Setup the stack pointer for restore of thread 1
+  212 00000080 E59FD05C        ldr              sp, =THREAD1STACK
+  213 00000084 E28DD03C        add              sp, sp, #15*4
+  214 00000088 EA00000A        b                restoreContext
+  215 0000008C         
+  216 0000008C         switchToThread0
+  217 0000008C         ;Update current thread to thread 0
+  218 0000008C E59F0048        ldr              r0, =CURRENTTHREAD
+  219 00000090 E3A01000        ldr              r1, =0
+  220 00000094 E5801000        str              r1, [r0]
+  221 00000098         ;Restore the context of the last thread from interrupt s
                        tack
-  209 00000080 E8BD5FFF        ldmfd            sp!, {r0-r12, lr}
-  210 00000084         ;Save the context of the interrrupted thread to its stac
+  222 00000098 E8BD5FFF        ldmfd            sp!, {r0-r12, lr}
+  223 0000009C         ;Save the context of the interrrupted thread to its stac
                        k
-  211 00000084 E59FD030        ldr              sp, =THREAD1STACK
-  212 00000088 E88D5FFF        stmia            sp, {r0-r12, lr}
-  213 0000008C         ;Setup the stack pointer for restore of thread 0
-  214 0000008C E59FD024        ldr              sp, =THREAD0STACK
-  215 00000090 E28DD038        add              sp, sp, #14*4
-  216 00000094 EAFFFFFF        b                restoreContext
-  217 00000098         
-  218 00000098         restoreContext
-  219 00000098         
-  220 00000098         ;this is where we stop the timer from making the interru
+  224 0000009C E59FD040        ldr              sp, =THREAD1STACK
+  225 000000A0 E88D5FFF        stmia            sp, {r0-r12, lr}
+  226 000000A4         ;Store the spsr
+  227 000000A4 E14F1000        mrs              r1, spsr
+  228 000000A8 E48D1004        str              r1, [sp], #4
+  229 000000AC         ;Setup the stack pointer for restore of thread 0
+  230 000000AC E59FD02C        ldr              sp, =THREAD0STACK
+  231 000000B0 E28DD03C        add              sp, sp, #15*4
+  232 000000B4 EAFFFFFF        b                restoreContext
+  233 000000B8         
+  234 000000B8         restoreContext
+  235 000000B8         
+  236 000000B8         ;this is where we stop the timer from making the interru
                        pt request to the VIC
-  221 00000098         ;i.e. we 'acknowledge' the interrupt
-  222 00000098 E59F0044        ldr              r0,=T0
-  223 0000009C E3A01001        mov              r1,#TimerResetTimer0Interrupt
-  224 000000A0 E5801000        str              r1,[r0,#IR] ; remove MR0 interr
+  237 000000B8         ;i.e. we 'acknowledge' the interrupt
+  238 000000B8 E59F004C        ldr              r0,=T0
+  239 000000BC E3A01001        mov              r1,#TimerResetTimer0Interrupt
+  240 000000C0 E5801000        str              r1,[r0,#IR] ; remove MR0 interr
                                                             upt request from ti
                                                             mer
-  225 000000A4         
-  226 000000A4         ;here we stop the VIC from making the interrupt request 
+  241 000000C4         
+  242 000000C4         ;here we stop the VIC from making the interrupt request 
                        to the CPU:
-  227 000000A4 E59F003C        ldr              r0,=VIC
-  228 000000A8 E3A01000        mov              r1,#0
-  229 000000AC E5801030        str              r1,[r0,#VectAddr] ; reset VIC
-  230 000000B0         
-  231 000000B0         ;mrs r0, spsr
-  232 000000B0         ;msr cpsr_cxsf, r0
-  233 000000B0         
-  234 000000B0         ;Resume the selected thread and return to the user mode
-  235 000000B0 E95D9FFF        ldmdb            sp,{r0-r12,pc}^
-  236 000000B4         
-  237 000000B4         
-  238 000000B4 00000000 
+  243 000000C4 E59F0044        ldr              r0,=VIC
+  244 000000C8 E3A01000        mov              r1,#0
+  245 000000CC E5801030        str              r1,[r0,#VectAddr] ; reset VIC
+  246 000000D0         
+  247 000000D0         ;Restore the spsr from memory to the cpsr
+  248 000000D0 E53D0004        ldr              r0, [sp, #-4]!
+  249 000000D4 E16FF000        msr              spsr_cxsf, r0
+  250 000000D8         ;Resume the selected thread and return to the user mode
+  251 000000D8 E95D9FFF        ldmdb            sp,{r0-r12,pc}^
+  252 000000DC         
+  253 000000DC         
+  254 000000DC 00000000 
               00000000 
               00000000 
               00000000 
@@ -372,44 +388,20 @@ ARM Macro Assembler    Page 6
               00000000 
               00000000 
               00000000 
-              00000000 
-              00000000 
-              00000000 
-              00000000 
-              E0004000 
-              FFFFF000         AREA             processStorage, READWRITE
-  239 00000000         
-  240 00000000 00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
 
 
 
 ARM Macro Assembler    Page 7 
 
 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00    THREAD0STACK
-                               SPACE            56
-  241 00000038 00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
-              00 00 00 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              E0004000 
+              FFFFF000         AREA             processStorage, READWRITE
+  255 00000000         
+  256 00000000 00 00 00 
               00 00 00 
               00 00 00 
               00 00 00 
@@ -423,12 +415,38 @@ ARM Macro Assembler    Page 7
               00 00 00 
               00 00 00 
               00 00 00 
-              00 00    THREAD1STACK
-                               SPACE            56
-  242 00000070 FFFFFFFF 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 THREAD0STACK
+                               SPACE            60
+  257 0000003C 00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 THREAD1STACK
+                               SPACE            60
+  258 00000078 FFFFFFFF 
                        CURRENTTHREAD
                                DCD              -1
-  243 00000074                 END
+  259 0000007C                 END
 Command Line: --debug --xref --diag_suppress=9931 --apcs=interwork --depend=.\a
 pp.d -o.\app.o -IC:\Keil_v5\ARM\RV31\INC -IC:\Keil_v5\ARM\CMSIS\Include -IC:\Ke
 il_v5\ARM\INC\Philips --predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 
@@ -451,9 +469,9 @@ initLoop 00000050
 
 Symbol: initLoop
    Definitions
-      At line 81 in file App.s
+      At line 85 in file App.s
    Uses
-      At line 81 in file App.s
+      At line 85 in file App.s
 Comment: initLoop used once
 start 00000000
 
@@ -474,7 +492,7 @@ blinky0 00000000
 
 Symbol: blinky0
    Definitions
-      At line 84 in file App.s
+      At line 88 in file App.s
    Uses
       None
 Comment: blinky0 unused
@@ -482,33 +500,33 @@ dloop 00000024
 
 Symbol: dloop
    Definitions
-      At line 103 in file App.s
+      At line 107 in file App.s
    Uses
-      At line 104 in file App.s
+      At line 108 in file App.s
 Comment: dloop used once
 dloop2 00000034
 
 Symbol: dloop2
    Definitions
-      At line 109 in file App.s
+      At line 113 in file App.s
    Uses
-      At line 110 in file App.s
+      At line 114 in file App.s
 Comment: dloop2 used once
 floop 00000018
 
 Symbol: floop
    Definitions
-      At line 97 in file App.s
+      At line 101 in file App.s
    Uses
-      At line 111 in file App.s
+      At line 115 in file App.s
 Comment: floop used once
 startBlinky0 00000000
 
 Symbol: startBlinky0
    Definitions
-      At line 86 in file App.s
+      At line 90 in file App.s
    Uses
-      At line 178 in file App.s
+      At line 182 in file App.s
 Comment: startBlinky0 used once
 5 symbols
 
@@ -521,7 +539,7 @@ blinky1 00000000
 
 Symbol: blinky1
    Definitions
-      At line 117 in file App.s
+      At line 121 in file App.s
    Uses
       None
 Comment: blinky1 unused
@@ -529,33 +547,33 @@ dloopb2 00000024
 
 Symbol: dloopb2
    Definitions
-      At line 138 in file App.s
+      At line 142 in file App.s
    Uses
-      At line 139 in file App.s
+      At line 143 in file App.s
 Comment: dloopb2 used once
 dloopb22 00000034
 
 Symbol: dloopb22
    Definitions
-      At line 144 in file App.s
+      At line 148 in file App.s
    Uses
-      At line 145 in file App.s
+      At line 149 in file App.s
 Comment: dloopb22 used once
 floopb2 00000018
 
 Symbol: floopb2
    Definitions
-      At line 133 in file App.s
+      At line 137 in file App.s
    Uses
-      At line 146 in file App.s
+      At line 150 in file App.s
 Comment: floopb2 used once
 startBlinky1 00000000
 
 Symbol: startBlinky1
    Definitions
-      At line 119 in file App.s
+      At line 123 in file App.s
    Uses
-      At line 182 in file App.s
+      At line 189 in file App.s
 Comment: startBlinky1 used once
 5 symbols
 
@@ -568,7 +586,7 @@ InterruptStuff 00000000
 
 Symbol: InterruptStuff
    Definitions
-      At line 151 in file App.s
+      At line 155 in file App.s
    Uses
       None
 Comment: InterruptStuff unused
@@ -576,43 +594,43 @@ initialSwitch 00000028
 
 Symbol: initialSwitch
    Definitions
-      At line 168 in file App.s
+      At line 172 in file App.s
    Uses
-      At line 162 in file App.s
+      At line 166 in file App.s
 Comment: initialSwitch used once
 irqhan 00000000
 
 Symbol: irqhan
    Definitions
-      At line 152 in file App.s
+      At line 156 in file App.s
    Uses
       At line 49 in file App.s
 Comment: irqhan used once
-restoreContext 00000098
+restoreContext 000000B8
 
 Symbol: restoreContext
    Definitions
-      At line 218 in file App.s
+      At line 234 in file App.s
    Uses
-      At line 186 in file App.s
-      At line 201 in file App.s
-      At line 216 in file App.s
+      At line 196 in file App.s
+      At line 214 in file App.s
+      At line 232 in file App.s
 
-switchToThread0 00000074
+switchToThread0 0000008C
 
 Symbol: switchToThread0
    Definitions
-      At line 203 in file App.s
+      At line 216 in file App.s
    Uses
-      At line 166 in file App.s
+      At line 170 in file App.s
 Comment: switchToThread0 used once
-switchToThread1 00000050
+switchToThread1 00000060
 
 Symbol: switchToThread1
    Definitions
-      At line 188 in file App.s
+      At line 198 in file App.s
    Uses
-      At line 164 in file App.s
+      At line 168 in file App.s
 Comment: switchToThread1 used once
 6 symbols
 
@@ -621,42 +639,42 @@ Comment: switchToThread1 used once
 ARM Macro Assembler    Page 1 Alphabetic symbol ordering
 Relocatable symbols
 
-CURRENTTHREAD 00000070
+CURRENTTHREAD 00000078
 
 Symbol: CURRENTTHREAD
    Definitions
-      At line 242 in file App.s
+      At line 258 in file App.s
    Uses
-      At line 159 in file App.s
-      At line 173 in file App.s
-      At line 190 in file App.s
-      At line 205 in file App.s
+      At line 163 in file App.s
+      At line 177 in file App.s
+      At line 200 in file App.s
+      At line 218 in file App.s
 
 THREAD0STACK 00000000
 
 Symbol: THREAD0STACK
    Definitions
-      At line 240 in file App.s
+      At line 256 in file App.s
    Uses
-      At line 177 in file App.s
-      At line 196 in file App.s
-      At line 214 in file App.s
+      At line 181 in file App.s
+      At line 206 in file App.s
+      At line 230 in file App.s
 
-THREAD1STACK 00000038
+THREAD1STACK 0000003C
 
 Symbol: THREAD1STACK
    Definitions
-      At line 241 in file App.s
+      At line 257 in file App.s
    Uses
-      At line 181 in file App.s
-      At line 199 in file App.s
-      At line 211 in file App.s
+      At line 188 in file App.s
+      At line 212 in file App.s
+      At line 224 in file App.s
 
 processStorage 00000000
 
 Symbol: processStorage
    Definitions
-      At line 238 in file App.s
+      At line 254 in file App.s
    Uses
       None
 Comment: processStorage unused
@@ -673,7 +691,7 @@ Symbol: IO0CLR
    Definitions
       At line 36 in file App.s
    Uses
-      At line 128 in file App.s
+      At line 132 in file App.s
 Comment: IO0CLR used once
 IO0DIR E0028008
 
@@ -681,7 +699,7 @@ Symbol: IO0DIR
    Definitions
       At line 34 in file App.s
    Uses
-      At line 121 in file App.s
+      At line 125 in file App.s
 Comment: IO0DIR used once
 IO0PIN E0028000
 
@@ -697,7 +715,7 @@ Symbol: IO0SET
    Definitions
       At line 35 in file App.s
    Uses
-      At line 126 in file App.s
+      At line 130 in file App.s
 Comment: IO0SET used once
 IO1CLR E002801C
 
@@ -705,7 +723,7 @@ Symbol: IO1CLR
    Definitions
       At line 32 in file App.s
    Uses
-      At line 94 in file App.s
+      At line 98 in file App.s
 Comment: IO1CLR used once
 IO1DIR E0028018
 
@@ -713,7 +731,7 @@ Symbol: IO1DIR
    Definitions
       At line 30 in file App.s
    Uses
-      At line 87 in file App.s
+      At line 91 in file App.s
 Comment: IO1DIR used once
 IO1SET E0028014
 
@@ -721,7 +739,7 @@ Symbol: IO1SET
    Definitions
       At line 31 in file App.s
    Uses
-      At line 92 in file App.s
+      At line 96 in file App.s
 Comment: IO1SET used once
 IR 00000000
 
@@ -736,7 +754,7 @@ Absolute symbols
       At line 8 in file App.s
    Uses
       At line 68 in file App.s
-      At line 224 in file App.s
+      At line 240 in file App.s
 
 IRQslot_en 00000005
 
@@ -777,7 +795,7 @@ Symbol: T0
       At line 5 in file App.s
    Uses
       At line 62 in file App.s
-      At line 222 in file App.s
+      At line 238 in file App.s
 
 T1 E0008000
 
@@ -863,7 +881,7 @@ ARM Macro Assembler    Page 4 Alphabetic symbol ordering
 Absolute symbols
 
    Uses
-      At line 223 in file App.s
+      At line 239 in file App.s
 Comment: TimerResetTimer0Interrupt used once
 VIC FFFFF000
 
@@ -872,7 +890,7 @@ Symbol: VIC
       At line 20 in file App.s
    Uses
       At line 47 in file App.s
-      At line 227 in file App.s
+      At line 243 in file App.s
 
 VectAddr 00000030
 
@@ -881,7 +899,7 @@ Symbol: VectAddr
       At line 22 in file App.s
    Uses
       At line 59 in file App.s
-      At line 229 in file App.s
+      At line 245 in file App.s
 
 VectAddr0 00000100
 
