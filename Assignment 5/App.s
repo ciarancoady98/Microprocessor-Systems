@@ -39,8 +39,6 @@ IO0PIN 	EQU 0XE0028000
 	AREA	InitialisationAndMain, CODE, READONLY
 	IMPORT	main
 
-; (c) Mike Brady, 2014 -- 2019.
-
 	EXPORT	start
 start
 ; initialisation code
@@ -78,57 +76,8 @@ start
 	mov	r1,#TimerCommandRun
 	str	r1,[r0,#TCR]
 	
-;Initialise thread contexts 
-	ldr r1, =CURRENTTHREAD
-	ldr r2, =0
-	str r2, [r1] ;set thread 0 as active
-	
-	;initialise thread 0 stack
-	ldr r0, =THREAD0STACK
-	ldr r1, =THREAD0SP
-	str r0, [r1]
-	
-	ldr r0, =THREAD1STACK
-	ldr r1, =THREAD1SP
-	str r0, [r1]
-
-	ldr r1, =0
-	str r1, [r0]
-	LDR R2, =INITIALISATIONCOUNT
-	LDR R3, [R2]
-	ADD R3, R3, #1
-	STR R3, [R2]
-	mrs r0, cpsr
-	;ldr r1, =0xFFFFFFE0
-	;and r0, r0, r1
-	;ldr r1, =0x00000010
-	;orr r0, r0, r1
-	
-	ldr r4, =THREAD0CPSR
-	str r0, [r4]
-	ldr r4, =THREAD1CPSR
-	str r0, [r4]
-	
-	ldr r3, =startBlinky1
-	mov lr, r3
-	ldr r4, =THREAD1PC
-	str r3, [r4]
-	
-	ldr r4, =THREAD1SP
-	mov sp, r4
-	stmfd	sp!,{r0-r12,lr}
-	str sp, [r4]
-	
-	ldr r3, =startBlinky0
-	mov lr, r3
-	
-	ldr r4, =THREAD0SP
-	mov sp, r4
-	stmfd	sp!,{r0-r12,lr}
-	str sp, [r4]
-	
-	B restoreContext
-	b irqhan
+	;Branch to interrupt handler for debugging purposes
+	;b irqhan
 initLoop B initLoop
 
 	;thread 0
@@ -149,17 +98,16 @@ floop
 	ldr	r0,=0x00010000	;select P1.19--P1.16
 	str r0, [r2]
 ;delay for about a half second
-	;ldr	r4,=4000000
-	ldr	r4,=1
+	ldr	r4,=4000000
+	;ldr	r4,=1
 dloop	subs	r4,r4,#1
 	bne	dloop
 	
 	str r0, [r1]
 	;delay for about a half second
-	ldr	r4,=1
+	ldr	r4,=4000000
 dloop2	subs	r4,r4,#1
 	bne	dloop2
-	b irqhan
 	b floop
 
 ;end blinky1
@@ -186,16 +134,15 @@ floopb2
 	ldr	r0,=0X00200000	;select P1.19--P1.16
 	str r0, [r2]
 ;delay for about a half second
-	ldr	r4,=1
+	ldr	r4,=4000000
 dloopb2	subs	r4,r4,#1
 	bne	dloopb2
 	
 	str r0, [r1]
 	;delay for about a half second
-	ldr	r4,=1
+	ldr	r4,=4000000
 dloopb22	subs	r4,r4,#1
 	bne	dloopb22
-	b irqhan
 	b floopb2
 
 ;end blinky 2
@@ -203,89 +150,69 @@ dloopb22	subs	r4,r4,#1
 ;interrupt stuff
 	AREA	InterruptStuff, CODE, READONLY
 irqhan
+	;Setup the return address as we want to re-excute the interrupted instruction
 	sub	lr,lr,#4
-	stmfd	sp!,{r0-r12,lr}	; the lr will be restored to the pc
-	
+	;Store the context of the thread we interrupted to the interrupt stack
+	stmfd	sp!,{r0-r12,lr}
 ;this is the body of the interrupt handler
 ;switching threads
 	ldr r0, =CURRENTTHREAD
 	ldr r1, [r0]
+	cmp r1, #-1
+	beq initialSwitch
 	cmp r1, #0
-	beq switchTo1
-	cmp r1, #1
-	beq switchTo0
-
-switchTo0
-	;set this thread as the new active thread
-	ldr r1, =CURRENTTHREAD
-	ldr r2, =0
-	str r2, [r1] ;set thread 0 as active
+	beq switchToThread1
+	cmp r1, #1 
+	beq switchToThread0
 	
-	;spsr -> thread 1 cpsr
-	ldr r3, =THREAD1CPSR
-	mrs r4, spsr
-	str r4, [r3]
-	
-	;save thread 1 stuff to its stack and memory
-	ldr r5, =THREAD1PC
-	str lr, [r5]
-	ldmfd	sp!,{r0-r12,lr}
-	ldr r5, =THREAD1SP
-	ldr sp, [sp]
-	stmfd	sp!,{r0-r12,lr}
-	str sp, [r5]
-	
-	
-	;restore thread 0 pc
-	ldr lr, =THREAD0PC
-	ldr lr, [lr]
-	
-	;restore thread 0 sp
-	ldr sp, =THREAD0SP
-	ldr sp, [sp]
-	
-	;restore cpsr to spsr
-	ldr r0, =THREAD0CPSR
-	ldr r0, [r0]
-	msr spsr_cxsf, r0
-	
+initialSwitch
+	;In here we setup the contexts and decide on which thread to run
+	;Initialise thread contexts 
+	;mov r0, sp ; save the current stack pointer
+	;Set thread 1 as the running thread
+	ldr r0, =CURRENTTHREAD
+	ldr r1, =1
+	str r1, [r0]
+	;load the initial values for thread 0
+	ldr sp, =THREAD0STACK
+	ldr lr, =startBlinky0
+	stmia sp, {r0-r12, lr}
+	;load the initial values for thread 1
+	ldr sp, =THREAD1STACK
+	ldr lr, =startBlinky1
+	stmia sp!, {r0-r12, lr}
+	;The stack pointer is now updated and ready
+	;to restore thread 1
 	b restoreContext
 	
-switchTo1
-	;set this thread as the new active thread
-	ldr r1, =CURRENTTHREAD
-	ldr r2, =1
-	str r2, [r1] ;set thread 1 as active
+switchToThread1
+	;Update current thread to thread 1
+	ldr r0, =CURRENTTHREAD
+	ldr r1, =1
+	str r1, [r0]
+	;Restore the context of the last thread from interrupt stack
+	ldmfd sp!, {r0-r12, lr}
+	;Save the context of the interrrupted thread to its stack
+	ldr sp, =THREAD0STACK
+	stmia sp, {r0-r12, lr}
+	;Setup the stack pointer for restore of thread 1
+	ldr sp, =THREAD1STACK
+	add sp, sp, #14*4
+	b restoreContext
 	
-	;spsr -> thread 0 cpsr
-	ldr r3, =THREAD0CPSR
-	mrs r4, spsr
-	str r4, [r3]
-	
-	;save thread 0 stuff to its stack and memory
-	ldr r5, =THREAD0PC
-	str lr, [r5]
-	ldmfd	sp!,{r0-r12,lr}
-	ldr r5, =THREAD0SP
-	ldr sp, [r5]
-	stmfd	sp!,{r0-r12,lr}
-	str sp, [r5]
-	
-	
-	
-	;restore thread 1 pc
-	ldr lr, =THREAD1PC
-	ldr lr, [lr]
-	
-	;restore thread 1 sp
-	ldr sp, =THREAD1SP
-	ldr sp, [sp]
-	
-	;restore cpsr to spsr
-	ldr r0, =THREAD1CPSR
-	ldr r0, [r0]
-	msr spsr_cxsf, r0
-
+switchToThread0
+	;Update current thread to thread 0
+	ldr r0, =CURRENTTHREAD
+	ldr r1, =0
+	str r1, [r0]
+	;Restore the context of the last thread from interrupt stack
+	ldmfd sp!, {r0-r12, lr}
+	;Save the context of the interrrupted thread to its stack
+	ldr sp, =THREAD1STACK
+	stmia sp, {r0-r12, lr}
+	;Setup the stack pointer for restore of thread 0
+	ldr sp, =THREAD0STACK
+	add sp, sp, #14*4
 	b restoreContext
 
 restoreContext
@@ -301,28 +228,16 @@ restoreContext
 	mov	r1,#0
 	str	r1,[r0,#VectAddr]	; reset VIC
 
-
-;restore context
-;at this point the lr, sp and cpsr are ready for the thread we are switching to
-	mrs r0, spsr
-	msr cpsr_cxsf, r0
-	;restore thread registers
-	ldmfd	sp!,{r0-r12,lr}
-	bx lr
+	;mrs r0, spsr
+	;msr cpsr_cxsf, r0
+	
+	;Resume the selected thread and return to the user mode
+	ldmdb	sp,{r0-r12,pc}^
 	
 	
 	AREA processStorage, READWRITE
-THREAD0STACK SPACE 400 
-THREAD0PC SPACE 4
-THREAD0SP SPACE 4
-THREAD0CPSR SPACE 4
-	
-THREAD1STACK SPACE 400
-THREAD1PC SPACE 4
-THREAD1SP SPACE 4
-THREAD1CPSR SPACE 4
-	
-CURRENTTHREAD DCD 0
-	
-INITIALISATIONCOUNT DCD 0 
+		
+THREAD0STACK SPACE 56 	
+THREAD1STACK SPACE 56
+CURRENTTHREAD DCD -1
 	END
