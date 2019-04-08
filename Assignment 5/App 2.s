@@ -1,4 +1,4 @@
-	; Definitions  -- references to 'UM' are to the User Manual.
+; Definitions  -- references to 'UM' are to the User Manual.
 
 ; Timer Stuff -- UM, Table 173
 
@@ -76,10 +76,6 @@ start
 	mov	r1,#TimerCommandRun
 	str	r1,[r0,#TCR]
 	
-	;Intialise spsr for debugging
-	mrs r1, cpsr
-	msr spsr_cxsf, r1
-	
 	;Branch to interrupt handler for debugging purposes
 	;b irqhan
 initLoop B initLoop
@@ -106,8 +102,6 @@ floop
 	;ldr	r4,=1
 dloop	subs	r4,r4,#1
 	bne	dloop
-	
-	;bl irqhan
 	
 	str r0, [r1]
 	;delay for about a half second
@@ -143,8 +137,6 @@ floopb2
 	ldr	r4,=4000000
 dloopb2	subs	r4,r4,#1
 	bne	dloopb2
-	
-	;bl irqhan
 	
 	str r0, [r1]
 	;delay for about a half second
@@ -185,18 +177,10 @@ initialSwitch
 	ldr sp, =THREAD0STACK
 	ldr lr, =startBlinky0
 	stmia sp, {r0-r12, lr}
-	;Store the spsr
-	ldr r0, =THREAD0CPSR
-	mrs r1, spsr
-	str r1, [r0]
 	;load the initial values for thread 1
 	ldr sp, =THREAD1STACK
 	ldr lr, =startBlinky1
 	stmia sp!, {r0-r12, lr}
-	;Store the spsr
-	ldr r12, =THREAD1CPSR
-	mrs r1, spsr
-	str r1, [r12]
 	;The stack pointer is now updated and ready
 	;to restore thread 1
 	b restoreContext
@@ -211,14 +195,9 @@ switchToThread1
 	;Save the context of the interrrupted thread to its stack
 	ldr sp, =THREAD0STACK
 	stmia sp, {r0-r12, lr}
-	;Store the spsr
-	ldr r0, =THREAD0CPSR
-	mrs r1, spsr
-	str r1, [r0]
 	;Setup the stack pointer for restore of thread 1
 	ldr sp, =THREAD1STACK
 	add sp, sp, #14*4
-	ldr r12, =THREAD1CPSR
 	b restoreContext
 	
 switchToThread0
@@ -231,14 +210,9 @@ switchToThread0
 	;Save the context of the interrrupted thread to its stack
 	ldr sp, =THREAD1STACK
 	stmia sp, {r0-r12, lr}
-	;Store the spsr
-	ldr r0, =THREAD1CPSR
-	mrs r1, spsr
-	str r1, [r0], #4
 	;Setup the stack pointer for restore of thread 0
 	ldr sp, =THREAD0STACK
 	add sp, sp, #14*4
-	ldr r12, =THREAD0CPSR
 	b restoreContext
 
 restoreContext
@@ -253,19 +227,17 @@ restoreContext
 	ldr	r0,=VIC
 	mov	r1,#0
 	str	r1,[r0,#VectAddr]	; reset VIC
+
+	;mrs r0, spsr
+	;msr cpsr_cxsf, r0
 	
-	;Restore the spsr from memory to the cpsr
-	ldr r0, [R12]
-	msr spsr_cxsf, r0
 	;Resume the selected thread and return to the user mode
 	ldmdb	sp,{r0-r12,pc}^
 	
 	
 	AREA processStorage, READWRITE
 		
-THREAD0STACK SPACE 15*4	
-THREAD0CPSR SPACE 4
-THREAD1STACK SPACE 15*4
-THREAD1CPSR SPACE 4
+THREAD0STACK SPACE 56 	
+THREAD1STACK SPACE 56
 CURRENTTHREAD DCD -1
 	END
