@@ -77,8 +77,8 @@ start
 	str	r1,[r0,#TCR]
 	
 	;Intialise spsr for debugging
-	mrs r1, cpsr
-	msr spsr_cxsf, r1
+	;mrs r1, cpsr
+	;msr spsr_cxsf, r1
 	
 	;Branch to interrupt handler for debugging purposes
 	;b irqhan
@@ -106,8 +106,6 @@ floop
 	;ldr	r4,=1
 dloop	subs	r4,r4,#1
 	bne	dloop
-	
-	;bl irqhan
 	
 	str r0, [r1]
 	;delay for about a half second
@@ -144,8 +142,6 @@ floopb2
 dloopb2	subs	r4,r4,#1
 	bne	dloopb2
 	
-	;bl irqhan
-	
 	str r0, [r1]
 	;delay for about a half second
 	ldr	r4,=4000000
@@ -176,7 +172,6 @@ irqhan
 initialSwitch
 	;In here we setup the contexts and decide on which thread to run
 	;Initialise thread contexts 
-	;mov r0, sp ; save the current stack pointer
 	;Set thread 1 as the running thread
 	ldr r0, =CURRENTTHREAD
 	ldr r1, =1
@@ -184,19 +179,17 @@ initialSwitch
 	;load the initial values for thread 0
 	ldr sp, =THREAD0STACK
 	ldr lr, =startBlinky0
-	stmia sp, {r0-r12, lr}
+	stmia sp!, {r0-r12, lr}
 	;Store the spsr
-	ldr r0, =THREAD0CPSR
 	mrs r1, spsr
-	str r1, [r0]
+	str r1, [sp]
 	;load the initial values for thread 1
 	ldr sp, =THREAD1STACK
 	ldr lr, =startBlinky1
 	stmia sp!, {r0-r12, lr}
 	;Store the spsr
-	ldr r12, =THREAD1CPSR
 	mrs r1, spsr
-	str r1, [r12]
+	str r1, [sp], #4
 	;The stack pointer is now updated and ready
 	;to restore thread 1
 	b restoreContext
@@ -210,15 +203,13 @@ switchToThread1
 	ldmfd sp!, {r0-r12, lr}
 	;Save the context of the interrrupted thread to its stack
 	ldr sp, =THREAD0STACK
-	stmia sp, {r0-r12, lr}
+	stmia sp!, {r0-r12, lr}
 	;Store the spsr
-	ldr r0, =THREAD0CPSR
 	mrs r1, spsr
-	str r1, [r0]
+	str r1, [sp]
 	;Setup the stack pointer for restore of thread 1
 	ldr sp, =THREAD1STACK
-	add sp, sp, #14*4
-	ldr r12, =THREAD1CPSR
+	add sp, sp, #15*4
 	b restoreContext
 	
 switchToThread0
@@ -230,15 +221,13 @@ switchToThread0
 	ldmfd sp!, {r0-r12, lr}
 	;Save the context of the interrrupted thread to its stack
 	ldr sp, =THREAD1STACK
-	stmia sp, {r0-r12, lr}
+	stmia sp!, {r0-r12, lr}
 	;Store the spsr
-	ldr r0, =THREAD1CPSR
 	mrs r1, spsr
-	str r1, [r0], #4
+	str r1, [sp], #4
 	;Setup the stack pointer for restore of thread 0
 	ldr sp, =THREAD0STACK
-	add sp, sp, #14*4
-	ldr r12, =THREAD0CPSR
+	add sp, sp, #15*4
 	b restoreContext
 
 restoreContext
@@ -255,7 +244,7 @@ restoreContext
 	str	r1,[r0,#VectAddr]	; reset VIC
 	
 	;Restore the spsr from memory to the cpsr
-	ldr r0, [R12]
+	ldr r0, [sp, #-4]!
 	msr spsr_cxsf, r0
 	;Resume the selected thread and return to the user mode
 	ldmdb	sp,{r0-r12,pc}^
@@ -264,8 +253,6 @@ restoreContext
 	AREA processStorage, READWRITE
 		
 THREAD0STACK SPACE 15*4	
-THREAD0CPSR SPACE 4
 THREAD1STACK SPACE 15*4
-THREAD1CPSR SPACE 4
 CURRENTTHREAD DCD -1
 	END
